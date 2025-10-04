@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VCIAS — Vegggie Central Intelligence Agency Society</title>
+  <!-- Simple, friendly font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --mint: #A8E6CF; /* primary mint green */
+      --mint-dark: #6DD9A1;
+      --pink: #FFB3C1; /* primary pink */
+      --pink-dark:#FF8DAA;
+      --accent: #2E8B57; /* dark green accent for contrast */
+      --bg: #FCFCFC;
+      --card: rgba(255,255,255,0.7);
+      --glass: rgba(255,255,255,0.35);
+      --radius: 14px;
+      color-scheme: light;
+    }
+    * { box-sizing: border-box; }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fffb 100%);
+      color:#0b3b2e;
+    }
+    /* page shell */
+    .site { min-height:100vh; display:flex; flex-direction:column; align-items:stretch; }
+    /* header */
+    header{
+      display:flex; align-items:center; gap:16px; padding:18px 24px;
+      background: linear-gradient(90deg, var(--mint) 0%, rgba(255,255,255,0) 60%);
+      border-bottom: 1px solid rgba(0,0,0,0.05); position:sticky; top:0;
+      backdrop-filter: blur(6px); z-index:10;
+    }
+    .brand { display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit; }
+    .logo { width:56px; height:56px; border-radius:12px; display:grid; place-items:center;
+      background: linear-gradient(135deg, var(--mint-dark), var(--pink));
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08); flex:0 0 56px; }
+    .logo svg{ width:34px; height:34px; display:block; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.12)); }
+    .site-title { line-height:1; }
+    .site-title .name{ font-weight:700; font-size:1.05rem; letter-spacing:0.4px; }
+    .site-title .tag{ font-weight:300; font-size:0.8rem; color:rgba(0,0,0,0.55); }
+    nav { margin-left:auto; display:flex; gap:10px; align-items:center; }
+    nav a { text-decoration:none; padding:8px 12px; border-radius:10px; font-weight:600; color:var(--accent); }
+    nav a.btn-primary{
+      background: linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.06));
+      border: 1px solid rgba(0,0,0,0.05);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    }
+    /* hero */
+    .hero { display:grid; grid-template-columns: 1fr 420px; gap:28px; align-items:center;
+      padding:48px 24px; max-width:1100px; margin:18px auto; width:calc(100% - 40px); }
+    .hero-card { background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.6));
+      border-radius: var(--radius); padding:28px; box-shadow: 0 10px 30px rgba(22,48,30,0.05);
+      border: 1px solid rgba(0,0,0,0.04); }
+    .kicker { display:inline-block; padding:6px 10px; border-radius:999px;
+      background:linear-gradient(90deg,var(--pink),var(--mint)); color:white; font-weight:700; font-size:0.8rem;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin-bottom:14px; }
+    h1{ margin:6px 0 10px 0; font-size:2rem; color: #0f4f3a;}
+    p.lead{ margin:0 0 18px 0; color: #184e3a; font-weight:400; opacity:0.9; }
+    /* small stats row */
+    .stats{ display:flex; gap:12px; margin-top:6px; flex-wrap:wrap; }
+    .stat { background:var(--card); border-radius:12px; padding:10px 12px; min-width:120px;
+      box-shadow: inset 0 -2px 0 rgba(255,255,255,0.35); }
+    .stat .num{ font-weight:700; font-size:1.05rem; }
+    .stat .lbl{ font-size:0.8rem; color:rgba(0,0,0,0.55); }
+    /* right column - callout */
+    .callout { display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:center;
+      text-align:center; padding:22px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7));
+      border-radius:14px; border: 1px solid rgba(0,0,0,0.04); }
+    .callout strong{ display:block; font-size:1.15rem; color:var(--accent); }
+    .cta-row{ display:flex; gap:10px; margin-top:8px; }
+    .btn { padding:10px 14px; border-radius:12px; font-weight:700; text-decoration:none; display:inline-block; }
+    .btn.mint { background: linear-gradient(90deg,var(--mint), var(--mint-dark)); color:#083f2e; }
+    .btn.pink { background: linear-gradient(90deg,var(--pink), var(--pink-dark)); color:#2b1b21; }
+    /* features */
+    .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px;
+      padding: 8px 24px 64px; max-width:1100px; margin: 6px auto 36px; width:calc(100% - 40px); }
+    .feature { background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
+      padding:18px; border-radius:12px; border:1px solid rgba(0,0,0,0.04);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
+    .feature h3{ margin:6px 0 8px 0; font-size:1.05rem; color: #0f513f; }
+    .feature p{ margin:0; color:rgba(0,0,0,0.65); font-size:0.95rem; }
+    /* footer */
+    footer{ margin-top:auto; padding:22px; text-align:center;
+      background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.06));
+      border-top:1px solid rgba(0,0,0,0.04); }
+    .footer-inner{ max-width:900px; margin:0 auto; display:flex; gap:16px; align-items:center;
+      justify-content:center; flex-wrap:wrap; color:rgba(0,0,0,0.6); font-size:0.95rem; }
+    /* responsive */
+    @media (max-width:940px){ .hero { grid-template-columns:1fr; padding:28px 18px; } nav{ display:none; } }
+    @media (max-width:420px){ .logo{ width:48px; height:48px; } h1{ font-size:1.5rem; } }
+    /* little playful badge */
+    .veg-badge{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background: linear-gradient(90deg,var(--mint),var(--pink)); color:white; border-radius:999px; font-weight:700; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+    /* thankyou style kept minimal inline as well but here is fallback */
+    #thankyou { display: none; margin-top: 10px; padding: 10px; border-radius: 8px; background: #fff; border: 1px solid var(--mint); color: #0b3b2e; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="site">
+  <header>
+    <a href="/" class="brand" aria-label="VCIAS home">
+      <div class="logo" role="img" aria-hidden="false" title="VCIAS logo">
+        <!-- small veggie + spy-lens SVG -->
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+          <rect width="64" height="64" rx="12" fill="url(#g1)" />
+          <g transform="translate(6,6)">
+            <circle cx="22" cy="18" r="12" fill="#0f6b4f" />
+            <path d="M26 12c6 0 10 5 10 10 0 2.2-.7 4.2-2 5.8" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" fill="none"/>
+            <rect x="2" y="20" width="14" height="6" rx="3" fill="#6FD0A6" />
+          </g>
+        </svg>
+      </div>
+      <div class="site-title">
+        <div class="name">VCIAS</div>
+        <div class="tag">Vegggie Central Intelligence Agency Society</div>
+      </div>
+    </a>
+
+    <nav aria-label="Main navigation">
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#join" class="btn-primary">Join VCIAS</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-card">
+        <span class="kicker">Community • Grow • 67</span>
+        <h1 id="hero-title">VCIAS — Vegggie Central Intelligence Agency Society</h1>
+        <p class="lead">We’re a playful collective investigating the secret lives of vegetables, building veggie projects, and sharing recipes, art, and tiny experiments. Everyone is welcome — whether you love gardening, gadgets, or goofy conspiracy-free fun.</p>
+
+        <div class="stats" role="list" aria-label="Site stats">
+          <div class="stat" role="listitem">
+            <div class="num">1</div>
+            <div class="lbl">Active Projects</div>
+          </div>
+          <div class="stat" role="listitem">
+            <div class="num">3</div>
+            <div class="lbl">Community Members</div>
+          </div>
+          <div class="stat" role="listitem">
+            <div class="num">0.2</div>
+            <div class="lbl">Weekly Meetups</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn mint" href="#projects">Explore Projects</a>
+          <a class="btn pink" href="#join">Become an Agent</a>
+          <span style="align-self:center; margin-left:auto;" class="veg-badge" aria-hidden="true">🥦 VCIAS</span>
+        </div>
+      </div>
+
+      <aside class="callout" aria-labelledby="callout-title">
+        <div style="font-size:0.9rem; color:rgba(0,0,0,0.6)">Next Event</div>
+        <strong id="callout-title">Discuss ideas for student council posters</strong>
+        <div style="font-size:0.9rem; color:rgba(0,0,0,0.65)">Sat • 1:00 PM • IRL/Zoom</div>
+
+        <div class="cta-row">
+          <a class="btn mint" href="#rsvp">RSVP</a>
+          <a class="btn" style="background:transparent; border:1px solid rgba(0,0,0,0.06);">Calendar</a>
+        </div>
+      </aside>
+    </section>
+
+    <section id="about" style="max-width:1100px;margin:0 auto;padding:0 24px 28px;">
+      <h2 style="margin:0 0 12px 0;">About VCIAS</h2>
+      <p style="margin-top:0; color:rgba(0,0,0,0.7);">VCIAS (Vegggie Central Intelligence Agency Society) is a serious, highly enthusiastic group that loves veggies,(only the good ones tho) creativity, and community-driven projects. We make stuff, host things sometimes, prototype tiny farming robots, (not anymore) and eventually dress up as giant carrots.</p>
+    </section>
+
+    <section id="projects" class="features" aria-label="Featured projects">
+      <article class="feature" aria-labelledby="p1">
+        <h3 id="p1">Project: Website</h3>
+        <p>Making the website ur on rn.</p>
+      </article>
+
+      <article class="feature" aria-labelledby="p2">
+        <h3 id="p2">Project: Blank</h3>
+        <p>Redacted</p>
+      </article>
+
+      <article class="feature" aria-labelledby="p3">
+        <h3 id="p3">Project: Blank</h3>
+        <p>Redacted</p>
+      </article>
+    </section>
+
+    <section id="join" style="max-width:800px;margin:0 auto;padding:0 24px 56px;">
+      <div style="background:var(--glass); border-radius:12px; padding:18px; border:1px solid rgba(0,0,0,0.035);">
+        <h2 style="margin-top:0;">Join VCIAS</h2>
+        <p style="margin:6px 0 12px 0; color:rgba(0,0,0,0.65);">We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
+
+        <!-- === UPDATED FORM: posts to your Formspree URL (only this block changed) === -->
+        <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST"
+              style="display:grid; gap:8px; grid-template-columns: 1fr 180px; align-items:center;">
+          <input type="text" name="name" placeholder="Your name" aria-label="Your name" required
+                 style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);">
+          <input type="email" name="email" placeholder="Email" aria-label="Email" required
+                 style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);">
+          <textarea name="message" placeholder="A little about why you'd like to join..." required
+                    style="grid-column:1/-1;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);min-height:90px;"></textarea>
+          <button type="submit" class="btn mint" style="grid-column:span 2; justify-self:start;">Become an Agent</button>
+        </form>
+
+        <div id="thankyou" style="display:none;margin-top:10px;padding:10px;background:white;border:1px solid var(--mint);border-radius:8px;color:#0b3b2e;font-weight:600;">
+          ✅ Thank you! Your application has been sent.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div>© <strong>VCIAS</strong> — Vegggie Central Intelligence Agency Society</div>
+      <div style="opacity:0.8;">•</div>
+      <div><a href="#about" style="text-decoration:none;color:inherit;">About</a></div>
+      <div style="opacity:0.8;">•</div>
+      <div><a href="#join" style="text-decoration:none;color:inherit;">Contact</a></div>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Script to POST to Formspree and show confirmation.
+  // Make sure to test from your published Neocities URL (https://yourname.neocities.org)
+  const form = document.getElementById("vcias-form");
+  const thankyou = document.getElementById("thankyou");
+  form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const data = new FormData(form);
+    try {
+      const response = await fetch(form.action, {
+        method: form.method || "POST",
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        form.reset();
+        thankyou.style.display = "block";
+        // optional: hide after 6 seconds
+        setTimeout(() => { thankyou.style.display = "none"; }, 6000);
+      } else {
+        let msg = "❌ Something went wrong. Please try again.";
+        try {
+          const json = await response.json();
+          if (json && json.error) msg += "\\n" + json.error;
+        } catch (err) { /* ignore JSON parse errors */ }
+        alert(msg);
+        console.error("Formspree error:", response.status, response.statusText);
+      }
+    } catch (err) {
+      alert("Network error — check your connection or open the browser console for details.");
+      console.error(err);
+    }
+  });
+</script>
+</body>
+</html>
