@@ -1,270 +1,936 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VCIAS — Vegggie Central Intelligence Agency Society</title>
-  <!-- Simple, friendly font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --mint: #A8E6CF; /* primary mint green */
-      --mint-dark: #6DD9A1;
-      --pink: #FFB3C1; /* primary pink */
-      --pink-dark:#FF8DAA;
-      --accent: #2E8B57; /* dark green accent for contrast */
-      --bg: #FCFCFC;
-      --card: rgba(255,255,255,0.7);
-      --glass: rgba(255,255,255,0.35);
-      --radius: 14px;
-      color-scheme: light;
-    }
-    * { box-sizing: border-box; }
-    html,body{
-      height:100%;
-      margin:0;
-      font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background: linear-gradient(180deg, #ffffff 0%, #f8fffb 100%);
-      color:#0b3b2e;
-    }
-    /* page shell */
-    .site { min-height:100vh; display:flex; flex-direction:column; align-items:stretch; }
-    /* header */
-    header{
-      display:flex; align-items:center; gap:16px; padding:18px 24px;
-      background: linear-gradient(90deg, var(--mint) 0%, rgba(255,255,255,0) 60%);
-      border-bottom: 1px solid rgba(0,0,0,0.05); position:sticky; top:0;
-      backdrop-filter: blur(6px); z-index:10;
-    }
-    .brand { display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit; }
-    .logo { width:56px; height:56px; border-radius:12px; display:grid; place-items:center;
-      background: linear-gradient(135deg, var(--mint-dark), var(--pink));
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08); flex:0 0 56px; }
-    .logo svg{ width:34px; height:34px; display:block; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.12)); }
-    .site-title { line-height:1; }
-    .site-title .name{ font-weight:700; font-size:1.05rem; letter-spacing:0.4px; }
-    .site-title .tag{ font-weight:300; font-size:0.8rem; color:rgba(0,0,0,0.55); }
-    nav { margin-left:auto; display:flex; gap:10px; align-items:center; }
-    nav a { text-decoration:none; padding:8px 12px; border-radius:10px; font-weight:600; color:var(--accent); }
-    nav a.btn-primary{
-      background: linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.06));
-      border: 1px solid rgba(0,0,0,0.05);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.06);
-    }
-    /* hero */
-    .hero { display:grid; grid-template-columns: 1fr 420px; gap:28px; align-items:center;
-      padding:48px 24px; max-width:1100px; margin:18px auto; width:calc(100% - 40px); }
-    .hero-card { background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.6));
-      border-radius: var(--radius); padding:28px; box-shadow: 0 10px 30px rgba(22,48,30,0.05);
-      border: 1px solid rgba(0,0,0,0.04); }
-    .kicker { display:inline-block; padding:6px 10px; border-radius:999px;
-      background:linear-gradient(90deg,var(--pink),var(--mint)); color:white; font-weight:700; font-size:0.8rem;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin-bottom:14px; }
-    h1{ margin:6px 0 10px 0; font-size:2rem; color: #0f4f3a;}
-    p.lead{ margin:0 0 18px 0; color: #184e3a; font-weight:400; opacity:0.9; }
-    /* small stats row */
-    .stats{ display:flex; gap:12px; margin-top:6px; flex-wrap:wrap; }
-    .stat { background:var(--card); border-radius:12px; padding:10px 12px; min-width:120px;
-      box-shadow: inset 0 -2px 0 rgba(255,255,255,0.35); }
-    .stat .num{ font-weight:700; font-size:1.05rem; }
-    .stat .lbl{ font-size:0.8rem; color:rgba(0,0,0,0.55); }
-    /* right column - callout */
-    .callout { display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:center;
-      text-align:center; padding:22px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7));
-      border-radius:14px; border: 1px solid rgba(0,0,0,0.04); }
-    .callout strong{ display:block; font-size:1.15rem; color:var(--accent); }
-    .cta-row{ display:flex; gap:10px; margin-top:8px; }
-    .btn { padding:10px 14px; border-radius:12px; font-weight:700; text-decoration:none; display:inline-block; }
-    .btn.mint { background: linear-gradient(90deg,var(--mint), var(--mint-dark)); color:#083f2e; }
-    .btn.pink { background: linear-gradient(90deg,var(--pink), var(--pink-dark)); color:#2b1b21; }
-    /* features */
-    .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px;
-      padding: 8px 24px 64px; max-width:1100px; margin: 6px auto 36px; width:calc(100% - 40px); }
-    .feature { background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
-      padding:18px; border-radius:12px; border:1px solid rgba(0,0,0,0.04);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
-    .feature h3{ margin:6px 0 8px 0; font-size:1.05rem; color: #0f513f; }
-    .feature p{ margin:0; color:rgba(0,0,0,0.65); font-size:0.95rem; }
-    /* footer */
-    footer{ margin-top:auto; padding:22px; text-align:center;
-      background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.06));
-      border-top:1px solid rgba(0,0,0,0.04); }
-    .footer-inner{ max-width:900px; margin:0 auto; display:flex; gap:16px; align-items:center;
-      justify-content:center; flex-wrap:wrap; color:rgba(0,0,0,0.6); font-size:0.95rem; }
-    /* responsive */
-    @media (max-width:940px){ .hero { grid-template-columns:1fr; padding:28px 18px; } nav{ display:none; } }
-    @media (max-width:420px){ .logo{ width:48px; height:48px; } h1{ font-size:1.5rem; } }
-    /* little playful badge */
-    .veg-badge{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background: linear-gradient(90deg,var(--mint),var(--pink)); color:white; border-radius:999px; font-weight:700; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-    /* thankyou style kept minimal inline as well but here is fallback */
-    #thankyou { display: none; margin-top: 10px; padding: 10px; border-radius: 8px; background: #fff; border: 1px solid var(--mint); color: #0b3b2e; font-weight: 600; }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>VCIAS — Vegggie Central Intelligence Agency Society</title>
+    <!-- Simple, friendly font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Load Inter font for consistency with other generated files -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --mint: #A8E6CF; /* primary mint green */
+            --mint-dark: #6DD9A1;
+            --pink: #FFB3C1; /* primary pink */
+            --pink-dark:#FF8DAA;
+            --accent: #2E8B57; /* dark green accent for contrast */
+            --bg: #FCFCFC;
+            --card: rgba(255,255,255,0.7);
+            --glass: rgba(255,255,255,0.35);
+            --radius: 14px;
+            color-scheme: light;
+        }
+        * { box-sizing: border-box; }
+        html,body{
+            height:100%;
+            margin:0;
+            font-family:'Inter', 'Poppins', system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fffb 100%);
+            color:#0b3b2e;
+        }
+        /* page shell */
+        .site { min-height:100vh; display:flex; flex-direction:column; align-items:stretch; }
+        /* header */
+        header{
+            display:flex; align-items:center; gap:16px; padding:18px 24px;
+            background: linear-gradient(90deg, var(--mint) 0%, rgba(255,255,255,0) 60%);
+            border-bottom: 1px solid rgba(0,0,0,0.05); position:sticky; top:0;
+            backdrop-filter: blur(6px); z-index:10;
+        }
+        .brand { display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit; }
+        .logo { width:56px; height:56px; border-radius:12px; display:grid; place-items:center;
+            background: linear-gradient(135deg, var(--mint-dark), var(--pink));
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08); flex:0 0 56px; }
+        .logo svg{ width:34px; height:34px; display:block; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.12)); }
+        .site-title { line-height:1; }
+        .site-title .name{ font-weight:700; font-size:1.05rem; letter-spacing:0.4px; }
+        .site-title .tag{ font-weight:300; font-size:0.8rem; color:rgba(0,0,0,0.55); }
+        nav { margin-left:auto; display:flex; gap:10px; align-items:center; }
+        nav a { text-decoration:none; padding:8px 12px; border-radius:10px; font-weight:600; color:var(--accent); }
+        nav a.btn-primary{
+            background: linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.06));
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+            cursor: pointer;
+        }
+        /* hero */
+        .hero { display:grid; grid-template-columns: 1fr 420px; gap:28px; align-items:center;
+            padding:48px 24px; max-width:1100px; margin:18px auto; width:calc(100% - 40px); }
+        .hero-card { background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.6));
+            border-radius: var(--radius); padding:28px; box-shadow: 0 10px 30px rgba(22,48,30,0.05);
+            border: 1px solid rgba(0,0,0,0.04); }
+        .kicker { display:inline-block; padding:6px 10px; border-radius:999px;
+            background:linear-gradient(90deg,var(--pink),var(--mint)); color:white; font-weight:700; font-size:0.8rem;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin-bottom:14px; }
+        h1{ margin:6px 0 10px 0; font-size:2rem; color: #0f4f3a;}
+        p.lead{ margin:0 0 18px 0; color: #184e3a; font-weight:400; opacity:0.9; }
+        /* small stats row */
+        .stats{ display:flex; gap:12px; margin-top:6px; flex-wrap:wrap; }
+        .stat { background:var(--card); border-radius:12px; padding:10px 12px; min-width:120px;
+            box-shadow: inset 0 -2px 0 rgba(255,255,255,0.35); }
+        .stat .num{ font-weight:700; font-size:1.05rem; }
+        .stat .lbl{ font-size:0.8rem; color:rgba(0,0,0,0.55); }
+        /* right column - callout */
+        .callout { display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:center;
+            text-align:center; padding:22px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7));
+            border-radius:14px; border: 1px solid rgba(0,0,0,0.04); }
+        .callout strong{ display:block; font-size:1.15rem; color:var(--accent); }
+        .cta-row{ display:flex; gap:10px; margin-top:8px; }
+        .btn { padding:10px 14px; border-radius:12px; font-weight:700; text-decoration:none; display:inline-block; cursor: pointer; border: none;}
+        .btn.mint { background: linear-gradient(90deg,var(--mint), var(--mint-dark)); color:#083f2e; box-shadow: 0 4px 12px rgba(46,139,87,0.25);}
+        .btn.pink { background: linear-gradient(90deg,var(--pink), var(--pink-dark)); color:#2b1b21; box-shadow: 0 4px 12px rgba(255,141,170,0.25);}
+        .btn:hover { opacity: 0.9; }
+        /* features */
+        .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px;
+            padding: 8px 24px 64px; max-width:1100px; margin: 6px auto 36px; width:calc(100% - 40px); }
+        .feature { background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
+            padding:18px; border-radius:12px; border:1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
+        .feature h3{ margin:6px 0 8px 0; font-size:1.05rem; color: #0f513f; }
+        .feature p{ margin:0; color:rgba(0,0,0,0.65); font-size:0.95rem; }
+        /* footer */
+        footer{ margin-top:auto; padding:22px; text-align:center;
+            background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.06));
+            border-top:1px solid rgba(0,0,0,0.04); }
+        .footer-inner{ max-width:900px; margin:0 auto; display:flex; gap:16px; align-items:center;
+            justify-content:center; flex-wrap:wrap; color:rgba(0,0,0,0.6); font-size:0.95rem; }
+        /* responsive */
+        @media (max-width:940px){ .hero { grid-template-columns:1fr; padding:28px 18px; } nav{ display:none; } }
+        @media (max-width:420px){ .logo{ width:48px; height:48px; } h1{ font-size:1.5rem; } }
+        /* little playful badge */
+        .veg-badge{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background: linear-gradient(90deg,var(--mint),var(--pink)); color:white; border-radius:999px; font-weight:700; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+        
+        /* Form/Input styles */
+        input[type="text"], input[type="email"], input[type="password"], textarea, select {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.07);
+            background: rgba(255,255,255,0.8);
+            width: 100%;
+            font-family: inherit;
+        }
+
+        /* Portal Styling */
+        .portal-section {
+            display: none;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .portal-section.active {
+            display: block;
+        }
+
+        /* Calendar Styling */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 16px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            margin-bottom: 8px;
+        }
+        .day-name {
+            text-align: center;
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.9rem;
+            padding: 6px 0;
+        }
+        .calendar-day {
+            min-height: 100px;
+            padding: 8px;
+            border-radius: 8px;
+            background: var(--card);
+            border: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.8rem;
+            position: relative;
+        }
+        .calendar-day.empty {
+            background: rgba(240, 240, 240, 0.4);
+        }
+        .day-number {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0b3b2e;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .event-slot {
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            color: #0f4f3a;
+            line-height: 1.2;
+            word-break: break-all; /* Ensure long words break on mobile */
+        }
+
+        /* Admin Panel Styling */
+        .admin-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .admin-card {
+            padding: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.65));
+            border-radius: var(--radius);
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+        }
+
+        /* Message Box Styling */
+        .message-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: none;
+            font-weight: 600;
+            transition: transform 0.3s ease-out;
+            transform: translateY(100px);
+        }
+        .message-box.show {
+            display: block;
+            transform: translateY(0);
+        }
+
+        /* Emoji Picker Style */
+        .emoji-picker-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 8px;
+            padding: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.5);
+        }
+        .emoji-option {
+            font-size: 1.5rem;
+            cursor: pointer;
+            text-align: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: background 0.1s;
+        }
+        .emoji-option:hover {
+            background: var(--mint);
+        }
+        .emoji-option.selected {
+            border: 2px solid var(--pink-dark);
+            background: var(--mint);
+        }
+        
+        @media (max-width: 768px) {
+            .admin-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .logout-btn {
+            background: transparent;
+            color: var(--pink-dark);
+            font-weight: 600;
+            text-decoration: underline;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        
+    </style>
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- Global Firebase & App Variables ---
+        let db, auth;
+        let userId = null;
+        let isAdmin = false;
+        let appId = null;
+
+        // Initial admin agents (credentials hidden from source)
+        const INITIAL_ADMINS = [
+            { username: "AgentPotato", password: "vciasontop", isAdmin: true },
+            // dmNpYXNvbnRvcA== is Base64 for "vciasontop"
+            { username: "agentbeans", password: "vciasontop", isAdmin: true } 
+        ];
+
+        // Emojis for the scheduler
+        const EMOJIS = ['🥕', '🥔', '🍅', '🥦', '🧅', '🍄', '🕵️', '🗓️', '📝', '💡', '🎉', '🔒', '🛠️', '🌍'];
+        
+        // --- Utility Functions ---
+
+        /** Shows a temporary toast message to the user. */
+        function showMessage(text, isError = false) {
+            const box = document.getElementById('message-box');
+            box.textContent = text;
+            box.style.backgroundColor = isError ? '#ff4d4d' : 'var(--accent)';
+            box.classList.add('show');
+            setTimeout(() => {
+                box.classList.remove('show');
+            }, 4000);
+        }
+
+        // --- Firebase Setup & Auth ---
+        async function initializeFirebase() {
+            setLogLevel('Debug');
+            try {
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is missing or empty.");
+                    showMessage("❌ Firebase configuration error.", true);
+                    return;
+                }
+                
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Firebase Auth Ready. User ID:", userId);
+                    } else {
+                        userId = null;
+                        console.log("Firebase Auth Ready. User is anonymous/signed out.");
+                    }
+                    // Run setup and initial rendering after auth state is known
+                    initializeAdminAgents();
+                    setupListenersAndRender();
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showMessage("❌ Failed to initialize Firebase.", true);
+            }
+        }
+        
+        /** Ensures the initial admin accounts exist in Firestore. */
+        async function initializeAdminAgents() {
+            if (!db || !appId) return;
+
+            try {
+                const adminsRef = collection(db, `artifacts/${appId}/public/data/vcias_admin_creds`);
+                
+                for (const agent of INITIAL_ADMINS) {
+                    const docRef = doc(adminsRef, agent.username);
+                    const docSnap = await getDoc(docRef);
+
+                    if (!docSnap.exists()) {
+                        // Create the admin user if they don't exist
+                        await setDoc(docRef, {
+                            username: agent.username,
+                            password: agent.password, // WARNING: Plaintext password for demo simplicity.
+                            isAdmin: true,
+                            createdAt: new Date().toISOString()
+                        });
+                        console.log(`Initial admin agent ${agent.username} created in Firestore.`);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to initialize admin agents in Firestore:", error);
+            }
+        }
+
+        /** Handles Agent login by querying Firestore for credentials. */
+        async function agentLogin(username, password) {
+            let agentData = null;
+
+            try {
+                // 1. Check the dedicated admin collection (where initial agents are stored)
+                const adminsRef = collection(db, `artifacts/${appId}/public/data/vcias_admin_creds`);
+                const adminDocRef = doc(adminsRef, username);
+                const adminSnap = await getDoc(adminDocRef);
+
+                if (adminSnap.exists()) {
+                    agentData = adminSnap.data();
+                } else {
+                    // 2. If not found in admins, check the general agents collection
+                    const agentsRef = collection(db, `artifacts/${appId}/public/data/vcias_agents`);
+                    const q = query(agentsRef, where("username", "==", username));
+                    const snapshot = await getDocs(q);
+
+                    if (!snapshot.empty) {
+                        agentData = snapshot.docs[0].data();
+                    }
+                }
+                
+                if (agentData) {
+                    // Authenticate against the stored password (still plaintext for this demo)
+                    if (agentData.password === password) {
+                        isAdmin = agentData.isAdmin || false;
+                        showMessage(`Welcome, ${isAdmin ? 'Admin' : 'Junior'} Agent ${username}!`);
+                        togglePortalView(true);
+                        return;
+                    }
+                }
+                
+                showMessage("❌ Invalid agent username or password.", true);
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                showMessage("❌ An error occurred during login.", true);
+            }
+        }
+
+        /** Handles Agent creation by Admins. */
+        async function createNewAgent(username, password, shouldBeAdmin) {
+            if (!isAdmin) {
+                showMessage("❌ Permission denied. Not an Admin.", true);
+                return;
+            }
+            if (username.length < 3 || password.length < 5) {
+                showMessage("❌ Username must be 3+ chars, Password 5+ chars.", true);
+                return;
+            }
+            
+            try {
+                // Check general agents collection first
+                const agentsRef = collection(db, `artifacts/${appId}/public/data/vcias_agents`);
+                
+                // Check if username already exists in general agents
+                const q = query(agentsRef, where("username", "==", username));
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    showMessage("❌ Agent username already exists.", true);
+                    return;
+                }
+
+                await addDoc(agentsRef, {
+                    username: username,
+                    password: password, // WARNING: Storing plaintext password for demo simplicity.
+                    isAdmin: shouldBeAdmin,
+                    createdAt: new Date().toISOString()
+                });
+
+                showMessage(`✅ Agent ${username} created!`);
+                document.getElementById('new-agent-form').reset();
+
+            } catch (error) {
+                console.error("Agent Creation Error:", error);
+                showMessage("❌ Failed to create agent.", true);
+            }
+        }
+
+        /** Handles Calendar Event scheduling by Admins. */
+        async function scheduleEvent(date, description, emoji) {
+            if (!isAdmin) {
+                showMessage("❌ Permission denied. Not an Admin.", true);
+                return;
+            }
+            if (!date || description.length === 0 || description.length > 25 || !emoji) {
+                showMessage("❌ Please complete all fields (max 25 chars for description).", true);
+                return;
+            }
+            
+            try {
+                const eventsRef = collection(db, `artifacts/${appId}/public/data/vcias_calendar_events`);
+                
+                // Use date string (YYYY-MM-DD) as the document ID for easy lookup
+                const docRef = doc(eventsRef, date);
+
+                // Get existing event data for that day
+                const docSnap = await getDoc(docRef);
+                const existingEvents = docSnap.exists() ? docSnap.data().events : [];
+                
+                // Add new event
+                existingEvents.push({
+                    time: new Date().toLocaleTimeString(), // time of entry, not event time
+                    description: description,
+                    emoji: emoji,
+                    creatorId: userId
+                });
+
+                // Update the document
+                await setDoc(docRef, { 
+                    date: date,
+                    events: existingEvents 
+                });
+
+                showMessage(`✅ Event scheduled for ${date}!`);
+                document.getElementById('schedule-event-form').reset();
+                document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+                document.getElementById('event-emoji-input').value = '';
+
+            } catch (error) {
+                console.error("Event Scheduling Error:", error);
+                showMessage("❌ Failed to schedule event.", true);
+            }
+        }
+        
+        // --- Calendar Logic ---
+        const today = new Date();
+        let currentMonth = today.getMonth();
+        let currentYear = today.getFullYear();
+        let calendarEvents = {}; // Stores fetched events { 'YYYY-MM-DD': [{emoji, description}, ...] }
+
+        /** Fetches calendar events from Firestore. */
+        function setupListenersAndRender() {
+            if (!db || !userId) return; // Wait for Firebase to initialize
+            
+            const eventsRef = collection(db, `artifacts/${appId}/public/data/vcias_calendar_events`);
+            
+            // Listen for real-time updates to calendar events
+            onSnapshot(eventsRef, (snapshot) => {
+                const newEvents = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.date && data.events) {
+                        newEvents[data.date] = data.events;
+                    }
+                });
+                calendarEvents = newEvents;
+                renderCalendar(currentMonth, currentYear);
+            }, (error) => {
+                console.error("Error fetching calendar data:", error);
+                showMessage("❌ Could not load calendar events.", true);
+            });
+            
+            // Render the initial calendar
+            renderCalendar(currentMonth, currentYear);
+        }
+
+        /** Renders the full calendar view. */
+        function renderCalendar(month, year) {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const monthYearDisplay = document.getElementById('month-year-display');
+            if (!calendarGrid || !monthYearDisplay) return;
+
+            const date = new Date(year, month);
+            const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+            calendarGrid.innerHTML = '';
+
+            // Add empty cells for the start of the month
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.innerHTML += '<div class="calendar-day empty"></div>';
+            }
+
+            // Add day cells
+            for (let i = 1; i <= daysInMonth; i++) {
+                const currentDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const events = calendarEvents[currentDate] || [];
+                
+                let eventsHtml = '';
+                events.forEach(event => {
+                    eventsHtml += `<div class="event-slot" title="${event.description}"><span style="font-size:1.1rem;">${event.emoji}</span>${event.description}</div>`;
+                });
+
+                calendarGrid.innerHTML += `
+                    <div class="calendar-day">
+                        <span class="day-number">${i}</span>
+                        ${eventsHtml}
+                    </div>
+                `;
+            }
+        }
+        
+        /** Changes the calendar month. */
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentMonth, currentYear);
+        }
+
+        // --- UI & Event Handlers ---
+        
+        /** Toggles between the homepage and the Agent Portal view. */
+        function togglePortalView(loggedIn = false) {
+            const isPortal = document.getElementById('agent-portal').classList.contains('active');
+            const targetEl = document.getElementById('agent-portal');
+            const homeEl = document.getElementById('homepage-content');
+            
+            if (!isPortal) {
+                homeEl.style.display = 'none';
+                targetEl.classList.add('active');
+                if (loggedIn) {
+                    document.getElementById('login-prompt').style.display = 'none';
+                    document.getElementById('portal-content').style.display = 'block';
+                    document.getElementById('admin-panel-ui').style.display = isAdmin ? 'grid' : 'none';
+                    document.getElementById('agent-status').textContent = isAdmin ? 'Admin' : 'Agent';
+                    document.getElementById('current-agent-id').textContent = userId;
+                } else {
+                    document.getElementById('login-prompt').style.display = 'block';
+                    document.getElementById('portal-content').style.display = 'none';
+                }
+            } else {
+                targetEl.classList.remove('active');
+                homeEl.style.display = 'block';
+            }
+        }
+        
+        /** Handles all page-wide event listeners after the DOM loads. */
+        window.onload = function() {
+            // 1. Disable Inspect Element (User Request)
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('keydown', e => {
+              if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
+                e.preventDefault();
+                showMessage("✋ Access Restricted.", true);
+              }
+            });
+
+            // 2. Initialize Firebase and Listeners
+            initializeFirebase();
+
+            // 3. Setup UI Interaction
+            
+            // Attach toggle handlers to the navigation buttons
+            document.querySelectorAll('[data-action="toggle-portal"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    togglePortalView(isAdmin); // Check if already logged in
+                });
+            });
+
+            // Calendar Navigation
+            document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
+            
+            // Login Form Submission
+            document.getElementById('agent-login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const user = e.target.username.value;
+                const pass = e.target.password.value;
+                await agentLogin(user, pass);
+            });
+            
+            // Admin: Agent Creation Form
+            document.getElementById('new-agent-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const user = e.target.newUsername.value;
+                const pass = e.target.newPassword.value;
+                const admin = e.target.newAdmin.checked;
+                await createNewAgent(user, pass, admin);
+            });
+            
+            // Admin: Event Scheduling Form
+            document.getElementById('schedule-event-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const date = e.target.eventDate.value;
+                const desc = e.target.eventDescription.value;
+                const emoji = e.target.eventEmoji.value;
+                await scheduleEvent(date, desc, emoji);
+            });
+            
+            // Admin: Emoji Picker setup
+            const emojiPicker = document.getElementById('emoji-picker');
+            const emojiInput = document.getElementById('event-emoji-input');
+            EMOJIS.forEach(emoji => {
+                const span = document.createElement('span');
+                span.className = 'emoji-option';
+                span.textContent = emoji;
+                span.addEventListener('click', () => {
+                    // Remove selection from others
+                    document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+                    // Select current
+                    span.classList.add('selected');
+                    emojiInput.value = emoji;
+                });
+                emojiPicker.appendChild(span);
+            });
+            
+            // Admin Logout
+            document.getElementById('logout-button').addEventListener('click', () => {
+                isAdmin = false;
+                togglePortalView(false);
+                showMessage("Signed out. See you soon, Agent.");
+            });
+            
+            // Formspree (Original Logic Kept)
+            const form = document.getElementById("vcias-form");
+            const thankyou = document.getElementById("thankyou");
+            form.addEventListener("submit", async function(e) {
+                e.preventDefault();
+                const data = new FormData(form);
+                try {
+                    const response = await fetch(form.action, {
+                        method: form.method || "POST",
+                        body: data,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        form.reset();
+                        thankyou.style.display = "block";
+                        setTimeout(() => { thankyou.style.display = "none"; }, 6000);
+                    } else {
+                        let msg = "❌ Something went wrong. Please try again.";
+                        try {
+                            const json = await response.json();
+                            if (json && json.error) msg += "\n" + json.error;
+                        } catch (err) { /* ignore JSON parse errors */ }
+                        showMessage(msg, true);
+                        console.error("Formspree error:", response.status, response.statusText);
+                    }
+                } catch (err) {
+                    showMessage("❌ Network error — check your connection.", true);
+                    console.error(err);
+                }
+            });
+
+        };
+
+        // Make functions available globally for HTML elements (Calendar navigation buttons)
+        window.changeMonth = changeMonth;
+
+    </script>
 </head>
 <body>
 <div class="site">
-  <header>
-    <a href="/" class="brand" aria-label="VCIAS home">
-      <div class="logo" role="img" aria-hidden="false" title="VCIAS logo">
-        <!-- small veggie + spy-lens SVG -->
-        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1">
-              <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/>
-              <stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/>
-            </linearGradient>
-          </defs>
-          <rect width="64" height="64" rx="12" fill="url(#g1)" />
-          <g transform="translate(6,6)">
-            <circle cx="22" cy="18" r="12" fill="#0f6b4f" />
-            <path d="M26 12c6 0 10 5 10 10 0 2.2-.7 4.2-2 5.8" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" fill="none"/>
-            <rect x="2" y="20" width="14" height="6" rx="3" fill="#6FD0A6" />
-          </g>
-        </svg>
-      </div>
-      <div class="site-title">
-        <div class="name">VCIAS</div>
-        <div class="tag">Vegggie Central Intelligence Agency Society</div>
-      </div>
-    </a>
+    <header>
+        <a href="/" class="brand" aria-label="VCIAS home">
+            <div class="logo" role="img" aria-hidden="false" title="VCIAS logo">
+                <!-- small veggie + spy-lens SVG -->
+                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="g1" x1="0" x2="1">
+                            <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/>
+                            <stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="64" height="64" rx="12" fill="url(#g1)" />
+                    <g transform="translate(6,6)">
+                        <circle cx="22" cy="18" r="12" fill="#0f6b4f" />
+                        <path d="M26 12c6 0 10 5 10 10 0 2.2-.7 4.2-2 5.8" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" fill="none"/>
+                        <rect x="2" y="20" width="14" height="6" rx="3" fill="#6FD0A6" />
+                    </g>
+                </svg>
+            </div>
+            <div class="site-title">
+                <div class="name">VCIAS</div>
+                <div class="tag">Vegggie Central Intelligence Agency Society</div>
+            </div>
+        </a>
 
-    <nav aria-label="Main navigation">
-      <a href="#about">About</a>
-      <a href="#projects">Projects</a>
-      <a href="#join" class="btn-primary">Join VCIAS</a>
-    </nav>
-  </header>
+        <nav aria-label="Main navigation">
+            <a href="#about">About</a>
+            <a href="#projects">Projects</a>
+            <a href="#" data-action="toggle-portal">Agent Portal</a> <!-- New Nav Link -->
+            <a href="#join" class="btn-primary">Join VCIAS</a>
+        </nav>
+    </header>
 
-  <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-card">
-        <span class="kicker">Community • Grow • 67</span>
-        <h1 id="hero-title">VCIAS — Vegggie Central Intelligence Agency Society</h1>
-        <p class="lead">We’re a playful collective investigating the secret lives of vegetables, building veggie projects, and sharing recipes, art, and tiny experiments. Everyone is welcome — whether you love gardening, gadgets, or goofy conspiracy-free fun.</p>
+    <main>
+        <!-- Homepage Content -->
+        <div id="homepage-content">
+            <section class="hero" aria-labelledby="hero-title">
+                <div class="hero-card">
+                    <span class="kicker">Community • Grow • 67</span>
+                    <h1 id="hero-title">VCIAS — Vegggie Central Intelligence Agency Society</h1>
+                    <p class="lead">We’re a playful collective investigating the secret lives of vegetables, building veggie projects, and sharing recipes, art, and tiny experiments. Everyone is welcome — whether you love gardening, gadgets, or goofy conspiracy-free fun.</p>
 
-        <div class="stats" role="list" aria-label="Site stats">
-          <div class="stat" role="listitem">
-            <div class="num">1</div>
-            <div class="lbl">Active Projects</div>
-          </div>
-          <div class="stat" role="listitem">
-            <div class="num">3</div>
-            <div class="lbl">Community Members</div>
-          </div>
-          <div class="stat" role="listitem">
-            <div class="num">0.2</div>
-            <div class="lbl">Weekly Meetups</div>
-          </div>
+                    <div class="stats" role="list" aria-label="Site stats">
+                        <div class="stat" role="listitem">
+                            <div class="num">1</div>
+                            <div class="lbl">Active Projects</div>
+                        </div>
+                        <div class="stat" role="listitem">
+                            <div class="num">3</div>
+                            <div class="lbl">Community Members</div>
+                        </div>
+                        <div class="stat" role="listitem">
+                            <div class="num">0.2</div>
+                            <div class="lbl">Weekly Meetups</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <a class="btn mint" href="#projects">Explore Projects</a>
+                        <a class="btn pink" href="#join">Become an Agent</a>
+                        <span style="align-self:center; margin-left:auto;" class="veg-badge" aria-hidden="true">🥦 VCIAS</span>
+                    </div>
+                </div>
+
+                <aside class="callout" aria-labelledby="callout-title">
+                    <div style="font-size:0.9rem; color:rgba(0,0,0,0.6)">Next Event</div>
+                    <strong id="callout-title">Discuss ideas for student council posters</strong>
+                    <div style="font-size:0.9rem; color:rgba(0,0,0,0.65)">Sat • 1:00 PM • IRL/Zoom</div>
+
+                    <div class="cta-row">
+                        <a class="btn mint" href="#join">RSVP</a>
+                        <!-- Updated Calendar button to toggle the Agent Portal view -->
+                        <a class="btn" style="background:transparent; border:1px solid rgba(0,0,0,0.06);" data-action="toggle-portal">Calendar</a>
+                    </div>
+                </aside>
+            </section>
+
+            <section id="about" style="max-width:1100px;margin:0 auto;padding:0 24px 28px;">
+                <h2 style="margin:0 0 12px 0;">About VCIAS</h2>
+                <p style="margin-top:0; color:rgba(0,0,0,0.7);">VCIAS (Vegggie Central Intelligence Agency Society) is a serious, highly enthusiastic group that loves veggies,(only the good ones tho) creativity, and community-driven projects. We make stuff, host things sometimes, prototype tiny farming robots, (not anymore) and eventually dress up as giant carrots.</p>
+            </section>
+
+            <section id="projects" class="features" aria-label="Featured projects">
+                <article class="feature" aria-labelledby="p1">
+                    <h3 id="p1">Project: Website</h3>
+                    <p>Making the website ur on rn.</p>
+                </article>
+
+                <article class="feature" aria-labelledby="p2">
+                    <h3 id="p2">Project: Blank</h3>
+                    <p>Redacted</p>
+                </article>
+
+                <article class="feature" aria-labelledby="p3">
+                    <h3 id="p3">Project: Blank</h3>
+                    <p>Redacted</p>
+                </article>
+            </section>
+
+            <section id="join" style="max-width:800px;margin:0 auto;padding:0 24px 56px;">
+                <div style="background:var(--glass); border-radius:12px; padding:18px; border:1px solid rgba(0,0,0,0.035);">
+                    <h2 style="margin-top:0;">Join VCIAS</h2>
+                    <p style="margin:6px 0 12px 0; color:rgba(0,0,0,0.65);">We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
+
+                    <!-- Formspree Form (Kept) -->
+                    <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST"
+                        style="display:grid; gap:8px; grid-template-columns: 1fr 1fr; align-items:center;">
+                        <input type="text" name="name" placeholder="Your name" aria-label="Your name" required>
+                        <input type="email" name="email" placeholder="Email" aria-label="Email" required>
+                        <textarea name="message" placeholder="A little about why you'd like to join..." required
+                            style="grid-column:1/-1;min-height:90px;"></textarea>
+                        <button type="submit" class="btn mint" style="grid-column:span 2; justify-self:start;">Become an Agent</button>
+                    </form>
+
+                    <div id="thankyou" style="display:none;margin-top:10px;padding:10px;background:white;border:1px solid var(--mint);border-radius:8px;color:#0b3b2e;font-weight:600;">
+                        ✅ Thank you! Your application has been sent.
+                    </div>
+                </div>
+            </section>
         </div>
+        
+        <!-- Agent Portal View (Hidden by default) -->
+        <section id="agent-portal" class="portal-section">
+            <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
+            
+            <!-- Login Prompt (Visible when not logged in) -->
+            <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px;">
+                <h3 style="margin-top:0;">Secure Agent Login 🔒</h3>
+                <form id="agent-login-form" style="display:grid; gap:12px;">
+                    <input type="text" name="username" placeholder="Agent Username" required>
+                    <input type="password" name="password" placeholder="Password" required>
+                    <button type="submit" class="btn mint" style="margin-top:10px;">Log In</button>
+                </form>
+                <p style="margin-top:20px; font-size:0.9rem; text-align:center; color:rgba(0,0,0,0.6);">
+                    Admin credentials are now securely stored in Firestore.
+                </p>
+            </div>
+            
+            <!-- Portal Content (Visible when logged in) -->
+            <div id="portal-content" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <p style="margin:0; font-weight:600;">Status: <span id="agent-status" style="color:var(--pink-dark);">Agent</span> | User ID: <span id="current-agent-id"></span></p>
+                    <button class="logout-btn" id="logout-button">Log Out</button>
+                </div>
 
-        <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-          <a class="btn mint" href="#projects">Explore Projects</a>
-          <a class="btn pink" href="#join">Become an Agent</a>
-          <span style="align-self:center; margin-left:auto;" class="veg-badge" aria-hidden="true">🥦 VCIAS</span>
+                <!-- Admin Panel -->
+                <div id="admin-panel-ui" class="admin-panel" style="display:none;">
+                    <div class="admin-card">
+                        <h3 style="margin-top:0; color:var(--pink-dark);">Agent Creator 👤</h3>
+                        <form id="new-agent-form" style="display:grid; gap:10px;">
+                            <input type="text" name="newUsername" placeholder="New Agent Username" required>
+                            <input type="password" name="newPassword" placeholder="Temporary Password" required>
+                            <label style="display:flex; align-items:center; gap:8px; font-weight:500; font-size:0.95rem;">
+                                <input type="checkbox" name="newAdmin" style="width:auto;"> Grant Admin Privileges
+                            </label>
+                            <button type="submit" class="btn pink" style="margin-top:10px;">Create Agent</button>
+                        </form>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3 style="margin-top:0; color:var(--mint-dark);">Event Scheduler 📅</h3>
+                        <form id="schedule-event-form" style="display:grid; gap:10px;">
+                            <label style="font-weight:500;">Event Date:</label>
+                            <input type="date" name="eventDate" required>
+                            <label style="font-weight:500;">Description (max 25 chars):</label>
+                            <input type="text" name="eventDescription" maxlength="25" placeholder="Brief event title..." required>
+                            <label style="font-weight:500;">Emoji:</label>
+                            <input type="hidden" id="event-emoji-input" name="eventEmoji" required>
+                            <div id="emoji-picker" class="emoji-picker-container">
+                                <!-- Emojis dynamically injected by JS -->
+                            </div>
+                            <button type="submit" class="btn mint" style="margin-top:10px;">Schedule Event</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Calendar Display -->
+                <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
+                    <div class="calendar-header">
+                        <button class="btn mint" onclick="changeMonth(-1)" id="prev-month"> &lt; Prev</button>
+                        <h3 id="month-year-display" style="margin:0;">Loading...</h3>
+                        <button class="btn mint" onclick="changeMonth(1)" id="next-month">Next &gt;</button>
+                    </div>
+                    
+                    <div class="calendar-grid">
+                        <div class="day-name">Sun</div>
+                        <div class="day-name">Mon</div>
+                        <div class="day-name">Tue</div>
+                        <div class="day-name">Wed</div>
+                        <div class="day-name">Thu</div>
+                        <div class="day-name">Fri</div>
+                        <div class="day-name">Sat</div>
+                        <!-- Calendar Days will be injected here by JS -->
+                        <div id="calendar-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>© <strong>VCIAS</strong> — Vegggie Central Intelligence Agency Society</div>
+            <div style="opacity:0.8;">•</div>
+            <div><a href="#about" style="text-decoration:none;color:inherit;">About</a></div>
+            <div style="opacity:0.8;">•</div>
+            <div><a href="#join" style="text-decoration:none;color:inherit;">Contact</a></div>
         </div>
-      </div>
-
-      <aside class="callout" aria-labelledby="callout-title">
-        <div style="font-size:0.9rem; color:rgba(0,0,0,0.6)">Next Event</div>
-        <strong id="callout-title">Discuss ideas for student council posters</strong>
-        <div style="font-size:0.9rem; color:rgba(0,0,0,0.65)">Sat • 1:00 PM • IRL/Zoom</div>
-
-        <div class="cta-row">
-          <a class="btn mint" href="#rsvp">RSVP</a>
-          <a class="btn" style="background:transparent; border:1px solid rgba(0,0,0,0.06);">Calendar</a>
-        </div>
-      </aside>
-    </section>
-
-    <section id="about" style="max-width:1100px;margin:0 auto;padding:0 24px 28px;">
-      <h2 style="margin:0 0 12px 0;">About VCIAS</h2>
-      <p style="margin-top:0; color:rgba(0,0,0,0.7);">VCIAS (Vegggie Central Intelligence Agency Society) is a serious, highly enthusiastic group that loves veggies,(only the good ones tho) creativity, and community-driven projects. We make stuff, host things sometimes, prototype tiny farming robots, (not anymore) and eventually dress up as giant carrots.</p>
-    </section>
-
-    <section id="projects" class="features" aria-label="Featured projects">
-      <article class="feature" aria-labelledby="p1">
-        <h3 id="p1">Project: Website</h3>
-        <p>Making the website ur on rn.</p>
-      </article>
-
-      <article class="feature" aria-labelledby="p2">
-        <h3 id="p2">Project: Blank</h3>
-        <p>Redacted</p>
-      </article>
-
-      <article class="feature" aria-labelledby="p3">
-        <h3 id="p3">Project: Blank</h3>
-        <p>Redacted</p>
-      </article>
-    </section>
-
-    <section id="join" style="max-width:800px;margin:0 auto;padding:0 24px 56px;">
-      <div style="background:var(--glass); border-radius:12px; padding:18px; border:1px solid rgba(0,0,0,0.035);">
-        <h2 style="margin-top:0;">Join VCIAS</h2>
-        <p style="margin:6px 0 12px 0; color:rgba(0,0,0,0.65);">We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
-
-        <!-- === UPDATED FORM: posts to your Formspree URL (only this block changed) === -->
-        <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST"
-              style="display:grid; gap:8px; grid-template-columns: 1fr 180px; align-items:center;">
-          <input type="text" name="name" placeholder="Your name" aria-label="Your name" required
-                 style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);">
-          <input type="email" name="email" placeholder="Email" aria-label="Email" required
-                 style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);">
-          <textarea name="message" placeholder="A little about why you'd like to join..." required
-                    style="grid-column:1/-1;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);min-height:90px;"></textarea>
-          <button type="submit" class="btn mint" style="grid-column:span 2; justify-self:start;">Become an Agent</button>
-        </form>
-
-        <div id="thankyou" style="display:none;margin-top:10px;padding:10px;background:white;border:1px solid var(--mint);border-radius:8px;color:#0b3b2e;font-weight:600;">
-          ✅ Thank you! Your application has been sent.
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="footer-inner">
-      <div>© <strong>VCIAS</strong> — Vegggie Central Intelligence Agency Society</div>
-      <div style="opacity:0.8;">•</div>
-      <div><a href="#about" style="text-decoration:none;color:inherit;">About</a></div>
-      <div style="opacity:0.8;">•</div>
-      <div><a href="#join" style="text-decoration:none;color:inherit;">Contact</a></div>
-    </div>
-  </footer>
+    </footer>
 </div>
 
-<script>
-  // Script to POST to Formspree and show confirmation.
-  // Make sure to test from your published Neocities URL (https://yourname.neocities.org)
-  const form = document.getElementById("vcias-form");
-  const thankyou = document.getElementById("thankyou");
-  form.addEventListener("submit", async function(e) {
-    e.preventDefault();
-    const data = new FormData(form);
-    try {
-      const response = await fetch(form.action, {
-        method: form.method || "POST",
-        body: data,
-        headers: { 'Accept': 'application/json' }
-      });
-      if (response.ok) {
-        form.reset();
-        thankyou.style.display = "block";
-        // optional: hide after 6 seconds
-        setTimeout(() => { thankyou.style.display = "none"; }, 6000);
-      } else {
-        let msg = "❌ Something went wrong. Please try again.";
-        try {
-          const json = await response.json();
-          if (json && json.error) msg += "\\n" + json.error;
-        } catch (err) { /* ignore JSON parse errors */ }
-        alert(msg);
-        console.error("Formspree error:", response.status, response.statusText);
-      }
-    } catch (err) {
-      alert("Network error — check your connection or open the browser console for details.");
-      console.error(err);
-    }
-  });
-</script>
+<!-- Custom Message Box for alerts -->
+<div id="message-box" class="message-box"></div>
+
 </body>
 </html>
+
