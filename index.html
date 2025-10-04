@@ -171,21 +171,6 @@
             word-break: break-all; /* Ensure long words break on mobile */
         }
 
-        /* Admin Panel Styling */
-        .admin-panel {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-top: 20px;
-        }
-        .admin-card {
-            padding: 18px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.65));
-            border-radius: var(--radius);
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
-        }
-
         /* Message Box Styling */
         .message-box {
             position: fixed;
@@ -206,41 +191,6 @@
             display: block;
             transform: translateY(0);
         }
-
-        /* Emoji Picker Style */
-        .emoji-picker-container {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            max-height: 150px;
-            overflow-y: auto;
-            margin-top: 8px;
-            padding: 8px;
-            border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 8px;
-            background: rgba(255,255,255,0.5);
-        }
-        .emoji-option {
-            font-size: 1.5rem;
-            cursor: pointer;
-            text-align: center;
-            padding: 4px;
-            border-radius: 6px;
-            transition: background 0.1s;
-        }
-        .emoji-option:hover {
-            background: var(--mint);
-        }
-        .emoji-option.selected {
-            border: 2px solid var(--pink-dark);
-            background: var(--mint);
-        }
-        
-        @media (max-width: 768px) {
-            .admin-panel {
-                grid-template-columns: 1fr;
-            }
-        }
         
         .logout-btn {
             background: transparent;
@@ -253,30 +203,22 @@
         }
         
     </style>
-    <!-- Firebase Imports -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    
+    <script>
         
-        // --- Global Firebase & App Variables ---
-        let db, auth;
-        let userId = null;
+        // !!! IMPORTANT SECURITY WARNING !!!
+        // The following object holds the agent credentials. 
+        // Since Firestore was removed, these credentials are 
+        // now visible to anyone who inspects the page source.
+        const AGENTS = {
+            "AgentPotato": { password: "vciasontop", isAdmin: true, userId: "agent-id-1" },
+            "agentbeans": { password: "vciasontop", isAdmin: true, userId: "agent-id-2" }
+            // Add more agents here if needed
+        };
+        
+        // --- Global App Variables ---
+        let currentUserId = null;
         let isAdmin = false;
-        let appId = null;
-
-        // Initial admin agents - NOTE: These credentials must be in the JS source
-        // to seed the database, but they are NOT used directly for login validation 
-        // after the initial seeding. The login always checks Firestore.
-        // Password for both is 'vciasontop'.
-        const INITIAL_ADMINS = [
-            { username: "AgentPotato", password: "vciasontop", isAdmin: true },
-            { username: "agentbeans", password: "vciasontop", isAdmin: true } 
-        ];
-
-        // Emojis for the scheduler
-        const EMOJIS = ['🥕', '🥔', '🍅', '🥦', '🧅', '🍄', '🕵️', '🗓️', '📝', '💡', '🎉', '🔒', '🛠️', '🌍'];
         
         // --- Utility Functions ---
 
@@ -302,200 +244,29 @@
             }
         }
 
-        // --- Firebase Setup & Auth ---
-        async function initializeFirebase() {
-            setLogLevel('Debug');
-            setLoginStatus(false, 'Initializing agent database...');
-            try {
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        /** Handles Agent login by checking the hardcoded AGENTS object. */
+        async function agentLogin(username, password) {
+            setLoginStatus(false, 'Authenticating...');
 
-                if (Object.keys(firebaseConfig).length === 0) {
-                    console.error("Firebase config is missing or empty.");
-                    showMessage("❌ Firebase configuration error.", true);
+            try {
+                const agentData = AGENTS[username];
+                
+                if (agentData && agentData.password === password) {
+                    currentUserId = agentData.userId; // Set a mock user ID
+                    isAdmin = agentData.isAdmin || false;
+                    showMessage(`Welcome, ${isAdmin ? 'Admin' : 'Junior'} Agent ${username}!`);
+                    togglePortalView(true);
+                    setLoginStatus(true, 'Ready to Log In'); // Reset status after successful login
                     return;
                 }
                 
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Wait for the admin agents to be initialized before setting up listeners
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        console.log("Firebase Auth Ready. User ID:", userId);
-                        // Ensure we wait for admin initialization before setting the login status
-                        initializeAdminAgents().then(() => {
-                            setLoginStatus(true, 'Ready to Log In (Password: vciasontop)');
-                            setupListenersAndRender();
-                        });
-                    } else {
-                        userId = null;
-                        console.log("Firebase Auth Ready. User is anonymous/signed out.");
-                    }
-                });
-
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                showMessage("❌ Failed to initialize Firebase.", true);
-                setLoginStatus(false, 'Initialization Failed');
-            }
-        }
-        
-        /** Ensures the initial admin accounts exist in Firestore. */
-        async function initializeAdminAgents() {
-            if (!db || !appId) return;
-
-            try {
-                // Use a single, simplified collection for all agent credentials
-                const agentsRef = collection(db, `artifacts/${appId}/public/data/vcias_agent_creds`);
-                
-                for (const agent of INITIAL_ADMINS) {
-                    const docRef = doc(agentsRef, agent.username);
-                    const docSnap = await getDoc(docRef);
-
-                    if (!docSnap.exists()) {
-                        // Create the admin user if they don't exist
-                        await setDoc(docRef, {
-                            username: agent.username,
-                            password: agent.password,
-                            isAdmin: true,
-                            createdAt: new Date().toISOString()
-                        });
-                        console.log(`Initial admin agent ${agent.username} created in Firestore.`);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to initialize admin agents in Firestore:", error);
-                showMessage("❌ Error seeding initial admin accounts.", true);
-            }
-        }
-
-        /** Handles Agent login by querying Firestore for credentials. */
-        async function agentLogin(username, password) {
-            setLoginStatus(false, 'Authenticating...');
-            let agentData = null;
-
-            try {
-                // Check the central agent credentials collection
-                const agentsRef = collection(db, `artifacts/${appId}/public/data/vcias_agent_creds`);
-                const agentDocRef = doc(agentsRef, username);
-                const agentSnap = await getDoc(agentDocRef);
-
-                if (agentSnap.exists()) {
-                    agentData = agentSnap.data();
-                }
-                
-                if (agentData) {
-                    // Authenticate against the stored password
-                    if (agentData.password === password) {
-                        isAdmin = agentData.isAdmin || false;
-                        showMessage(`Welcome, ${isAdmin ? 'Admin' : 'Junior'} Agent ${username}!`);
-                        togglePortalView(true);
-                        setLoginStatus(true, 'Ready to Log In (Password: vciasontop)'); // Reset status after successful login
-                        return;
-                    }
-                }
-                
                 showMessage("❌ Invalid agent username or password.", true);
-                setLoginStatus(true, 'Ready to Log In (Password: vciasontop)');
+                setLoginStatus(true, 'Ready to Log In');
 
             } catch (error) {
                 console.error("Login Error:", error);
                 showMessage("❌ An error occurred during login.", true);
-                setLoginStatus(true, 'Ready to Log In (Password: vciasontop)');
-            }
-        }
-
-        /** Handles Agent creation by Admins. */
-        async function createNewAgent(username, password, shouldBeAdmin) {
-            if (!isAdmin) {
-                showMessage("❌ Permission denied. Not an Admin.", true);
-                return;
-            }
-            if (username.length < 3 || password.length < 5) {
-                showMessage("❌ Username must be 3+ chars, Password 5+ chars.", true);
-                return;
-            }
-            
-            try {
-                const agentsRef = collection(db, `artifacts/${appId}/public/data/vcias_agent_creds`);
-                const agentDocRef = doc(agentsRef, username);
-                const agentSnap = await getDoc(agentDocRef);
-
-                if (agentSnap.exists()) {
-                    showMessage("❌ Agent username already exists.", true);
-                    return;
-                }
-
-                await setDoc(agentDocRef, {
-                    username: username,
-                    password: password,
-                    isAdmin: shouldBeAdmin,
-                    createdAt: new Date().toISOString()
-                });
-
-                showMessage(`✅ Agent ${username} created!`);
-                document.getElementById('new-agent-form').reset();
-
-            } catch (error) {
-                console.error("Agent Creation Error:", error);
-                showMessage("❌ Failed to create agent.", true);
-            }
-        }
-
-        /** Handles Calendar Event scheduling by Admins. */
-        async function scheduleEvent(date, description, emoji) {
-            if (!isAdmin) {
-                showMessage("❌ Permission denied. Not an Admin.", true);
-                return;
-            }
-            if (!date || description.length === 0 || description.length > 25 || !emoji) {
-                showMessage("❌ Please complete all fields (max 25 chars for description).", true);
-                return;
-            }
-            
-            try {
-                const eventsRef = collection(db, `artifacts/${appId}/public/data/vcias_calendar_events`);
-                
-                // Use date string (YYYY-MM-DD) as the document ID for easy lookup
-                const docRef = doc(eventsRef, date);
-
-                // Get existing event data for that day
-                const docSnap = await getDoc(docRef);
-                const existingEvents = docSnap.exists() ? docSnap.data().events : [];
-                
-                // Add new event
-                existingEvents.push({
-                    description: description,
-                    emoji: emoji,
-                    creatorId: userId,
-                    timestamp: new Date().toISOString()
-                });
-
-                // Update the document
-                await setDoc(docRef, { 
-                    date: date,
-                    events: existingEvents 
-                });
-
-                showMessage(`✅ Event scheduled for ${date}!`);
-                document.getElementById('schedule-event-form').reset();
-                document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
-                document.getElementById('event-emoji-input').value = '';
-
-            } catch (error) {
-                console.error("Event Scheduling Error:", error);
-                showMessage("❌ Failed to schedule event.", true);
+                setLoginStatus(true, 'Ready to Log In');
             }
         }
         
@@ -503,33 +274,10 @@
         const today = new Date();
         let currentMonth = today.getMonth();
         let currentYear = today.getFullYear();
-        let calendarEvents = {}; // Stores fetched events { 'YYYY-MM-DD': [{emoji, description}, ...] }
 
-        /** Fetches calendar events from Firestore. */
-        function setupListenersAndRender() {
-            if (!db || !userId) return; // Wait for Firebase to initialize
-            
-            const eventsRef = collection(db, `artifacts/${appId}/public/data/vcias_calendar_events`);
-            
-            // Listen for real-time updates to calendar events
-            onSnapshot(eventsRef, (snapshot) => {
-                const newEvents = {};
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.date && data.events) {
-                        newEvents[data.date] = data.events;
-                    }
-                });
-                calendarEvents = newEvents;
-                renderCalendar(currentMonth, currentYear);
-            }, (error) => {
-                console.error("Error fetching calendar data:", error);
-                showMessage("❌ Could not load calendar events.", true);
-            });
-            
-            // Render the initial calendar
-            renderCalendar(currentMonth, currentYear);
-        }
+        // Since Firestore is removed, this calendar is static and empty.
+        // If you need data, you'll have to hardcode a static array here.
+        let calendarEvents = {}; 
 
         /** Renders the full calendar view. */
         function renderCalendar(month, year) {
@@ -545,7 +293,7 @@
             monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
             calendarGrid.innerHTML = '';
 
-            // Add day names headers (since we cleared the grid)
+            // Add day names headers
             const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             dayNames.forEach(name => {
                  calendarGrid.innerHTML += `<div class="day-name">${name}</div>`;
@@ -558,13 +306,8 @@
 
             // Add day cells
             for (let i = 1; i <= daysInMonth; i++) {
-                const currentDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                const events = calendarEvents[currentDate] || [];
-                
-                let eventsHtml = '';
-                events.forEach(event => {
-                    eventsHtml += `<div class="event-slot" title="${event.description}"><span style="font-size:1.1rem;">${event.emoji}</span>${event.description}</div>`;
-                });
+                // Since data is static, events will always be empty
+                const eventsHtml = ''; 
 
                 calendarGrid.innerHTML += `
                     <div class="calendar-day">
@@ -602,17 +345,13 @@
                 if (loggedIn) {
                     document.getElementById('login-prompt').style.display = 'none';
                     document.getElementById('portal-content').style.display = 'block';
-                    document.getElementById('admin-panel-ui').style.display = isAdmin ? 'grid' : 'none';
                     document.getElementById('agent-status').textContent = isAdmin ? 'Admin' : 'Agent';
-                    document.getElementById('current-agent-id').textContent = userId;
+                    document.getElementById('current-agent-id').textContent = currentUserId;
+                    renderCalendar(currentMonth, currentYear); // Render calendar on login
                 } else {
                     document.getElementById('login-prompt').style.display = 'block';
                     document.getElementById('portal-content').style.display = 'none';
-                    // Re-run status check in case initialization lagged
-                    const button = document.getElementById('agent-login-form')?.querySelector('button[type="submit"]');
-                    if(button && !button.disabled) {
-                         setLoginStatus(true, 'Ready to Log In (Password: vciasontop)');
-                    }
+                    setLoginStatus(true, 'Ready to Log In');
                 }
             } else {
                 targetEl.classList.remove('active');
@@ -631,8 +370,9 @@
               }
             });
 
-            // 2. Initialize Firebase and Listeners
-            initializeFirebase();
+            // 2. Initial Setup
+            setLoginStatus(true, 'Ready to Log In');
+            renderCalendar(currentMonth, currentYear); // Render initial calendar view
 
             // 3. Setup UI Interaction
             
@@ -640,7 +380,7 @@
             document.querySelectorAll('[data-action="toggle-portal"]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    togglePortalView(isAdmin); // Check if already logged in
+                    togglePortalView(currentUserId !== null); // Check if logged in
                 });
             });
 
@@ -651,50 +391,15 @@
             // Login Form Submission
             document.getElementById('agent-login-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                // Ensure the form is ready before attempting login
                 if (e.target.querySelector('button[type="submit"]').disabled) return; 
                 const user = e.target.username.value;
                 const pass = e.target.password.value;
                 await agentLogin(user, pass);
             });
             
-            // Admin: Agent Creation Form
-            document.getElementById('new-agent-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const user = e.target.newUsername.value;
-                const pass = e.target.newPassword.value;
-                const admin = e.target.newAdmin.checked;
-                await createNewAgent(user, pass, admin);
-            });
-            
-            // Admin: Event Scheduling Form
-            document.getElementById('schedule-event-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const date = e.target.eventDate.value;
-                const desc = e.target.eventDescription.value;
-                const emoji = document.getElementById('event-emoji-input').value; // Get hidden field value
-                await scheduleEvent(date, desc, emoji);
-            });
-            
-            // Admin: Emoji Picker setup
-            const emojiPicker = document.getElementById('emoji-picker');
-            const emojiInput = document.getElementById('event-emoji-input');
-            EMOJIS.forEach(emoji => {
-                const span = document.createElement('span');
-                span.className = 'emoji-option';
-                span.textContent = emoji;
-                span.addEventListener('click', () => {
-                    // Remove selection from others
-                    document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
-                    // Select current
-                    span.classList.add('selected');
-                    emojiInput.value = emoji;
-                });
-                emojiPicker.appendChild(span);
-            });
-            
-            // Admin Logout
+            // Agent Logout
             document.getElementById('logout-button').addEventListener('click', () => {
+                currentUserId = null;
                 isAdmin = false;
                 togglePortalView(false);
                 showMessage("Signed out. See you soon, Agent.");
@@ -869,12 +574,12 @@
             <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px;">
                 <h3 style="margin-top:0;">Secure Agent Login 🔒</h3>
                 <form id="agent-login-form" style="display:grid; gap:12px;">
-                    <input type="text" name="username" placeholder="Agent Username (e.g., AgentPotato)" required>
-                    <input type="password" name="password" placeholder="Password (vciasontop)" required>
+                    <input type="text" name="username" placeholder="Agent Username" required>
+                    <input type="password" name="password" placeholder="Password" required>
                     <button type="submit" class="btn mint" style="margin-top:10px;" disabled>Log In</button>
                 </form>
                 <p id="login-status" style="margin-top:15px; font-size:0.9rem; text-align:center; color:gray;">
-                    Initializing agent database...
+                    Initializing agent portal...
                 </p>
             </div>
             
@@ -885,39 +590,10 @@
                     <button class="logout-btn" id="logout-button">Log Out</button>
                 </div>
 
-                <!-- Admin Panel -->
-                <div id="admin-panel-ui" class="admin-panel" style="display:none;">
-                    <div class="admin-card">
-                        <h3 style="margin-top:0; color:var(--pink-dark);">Agent Creator 👤</h3>
-                        <form id="new-agent-form" style="display:grid; gap:10px;">
-                            <input type="text" name="newUsername" placeholder="New Agent Username" required>
-                            <input type="password" name="newPassword" placeholder="Temporary Password" required>
-                            <label style="display:flex; align-items:center; gap:8px; font-weight:500; font-size:0.95rem;">
-                                <input type="checkbox" name="newAdmin" style="width:auto;"> Grant Admin Privileges
-                            </label>
-                            <button type="submit" class="btn pink" style="margin-top:10px;">Create Agent</button>
-                        </form>
-                    </div>
-
-                    <div class="admin-card">
-                        <h3 style="margin-top:0; color:var(--mint-dark);">Event Scheduler 📅</h3>
-                        <form id="schedule-event-form" style="display:grid; gap:10px;">
-                            <label style="font-weight:500;">Event Date:</label>
-                            <input type="date" name="eventDate" required>
-                            <label style="font-weight:500;">Description (max 25 chars):</label>
-                            <input type="text" name="eventDescription" maxlength="25" placeholder="Brief event title..." required>
-                            <label style="font-weight:500;">Emoji:</label>
-                            <input type="hidden" id="event-emoji-input" name="eventEmoji" required>
-                            <div id="emoji-picker" class="emoji-picker-container">
-                                <!-- Emojis dynamically injected by JS -->
-                            </div>
-                            <button type="submit" class="btn mint" style="margin-top:10px;">Schedule Event</button>
-                        </form>
-                    </div>
-                </div>
-
                 <!-- Calendar Display -->
                 <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
+                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Static) 📅</h3>
+                    <p style="color:rgba(0,0,0,0.65); font-size:0.9rem;">Since the database was removed, this calendar does not save events.</p>
                     <div class="calendar-header">
                         <button class="btn mint" onclick="changeMonth(-1)" id="prev-month"> &lt; Prev</button>
                         <h3 id="month-year-display" style="margin:0;">Loading...</h3>
@@ -925,7 +601,6 @@
                     </div>
                     
                     <div class="calendar-grid">
-                        <!-- Calendar Headers and Days will be injected here by JS -->
                         <div id="calendar-grid"></div>
                     </div>
                 </div>
