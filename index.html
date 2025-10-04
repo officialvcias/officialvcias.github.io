@@ -169,6 +169,9 @@
             color: #0f4f3a;
             line-height: 1.2;
             word-break: break-all; /* Ensure long words break on mobile */
+            background: var(--mint-dark);
+            padding: 2px 4px;
+            border-radius: 4px;
         }
 
         /* Message Box Styling */
@@ -202,6 +205,25 @@
             padding: 0;
         }
         
+        /* Admin Grid Layout for large screens */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .admin-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .admin-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
+            padding: 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+        }
+        
     </style>
     
     <script>
@@ -216,9 +238,20 @@
             // Add more agents here if needed
         };
         
-        // --- Global App Variables ---
+        // --- Global App Variables (In-Memory, Non-Persistent) ---
         let currentUserId = null;
         let isAdmin = false;
+        
+        // Storage for temporarily created agents and events (Lost on refresh!)
+        let staticAgents = {...AGENTS}; // Copy initial agents
+        let staticEvents = {
+            // Example event structure: 'YYYY-MM-DD': [{title: 'Meeting', creator: 'AgentPotato'}]
+            // Add a sample event so the calendar isn't completely empty
+            [new Date().toISOString().substring(0, 10)]: [
+                { title: "VCIAS Daily Brief", creator: "System" }
+            ]
+        }; 
+
         
         // --- Utility Functions ---
 
@@ -249,10 +282,11 @@
             setLoginStatus(false, 'Authenticating...');
 
             try {
-                const agentData = AGENTS[username];
+                // Check against the AGENTS object for initial login (which includes staticAgents added)
+                const agentData = staticAgents[username];
                 
                 if (agentData && agentData.password === password) {
-                    currentUserId = agentData.userId; // Set a mock user ID
+                    currentUserId = agentData.userId || 'temp-' + Math.random().toString(36).substring(2, 9);
                     isAdmin = agentData.isAdmin || false;
                     showMessage(`Welcome, ${isAdmin ? 'Admin' : 'Junior'} Agent ${username}!`);
                     togglePortalView(true);
@@ -270,16 +304,69 @@
             }
         }
         
+        // --- Admin Functions (In-Memory) ---
+        
+        /** Adds a new agent to the in-memory list (non-persistent). */
+        function createAgent(username, password, role) {
+            if (staticAgents[username]) {
+                showMessage(`Agent ${username} already exists in memory.`, true);
+                return false;
+            }
+            
+            const newAgent = {
+                password: password,
+                isAdmin: role === 'Admin',
+                userId: 'new-agent-' + Math.random().toString(36).substring(2, 9)
+            };
+            
+            staticAgents[username] = newAgent;
+            renderAgentList();
+            showMessage(`✅ Agent ${username} (${role}) created in memory (non-persistent).`);
+            return true;
+        }
+        
+        /** Renders the list of currently loaded agents. */
+        function renderAgentList() {
+            const ul = document.getElementById('agent-list');
+            if (!ul) return;
+            ul.innerHTML = '';
+            
+            const agentUsernames = Object.keys(staticAgents).sort();
+            agentUsernames.forEach(username => {
+                const agent = staticAgents[username];
+                const role = agent.isAdmin ? 'Admin' : 'Agent';
+                const li = document.createElement('li');
+                li.textContent = `${username} (${role})`;
+                li.style.color = agent.isAdmin ? 'var(--pink-dark)' : 'var(--accent)';
+                ul.appendChild(li);
+            });
+        }
+        
+        /** Schedules an event in the in-memory list (non-persistent). */
+        function scheduleEvent(title, dateString) {
+            const eventDate = dateString; // YYYY-MM-DD
+            
+            if (!staticEvents[eventDate]) {
+                staticEvents[eventDate] = [];
+            }
+            
+            staticEvents[eventDate].push({
+                title: title,
+                creator: currentUserId || 'Unknown Agent'
+            });
+            
+            renderCalendar(currentMonth, currentYear);
+            showMessage(`✅ Event '${title}' scheduled for ${eventDate} (non-persistent).`);
+            return true;
+        }
+
+        
         // --- Calendar Logic ---
         const today = new Date();
         let currentMonth = today.getMonth();
         let currentYear = today.getFullYear();
 
-        // Since Firestore is removed, this calendar is static and empty.
-        // If you need data, you'll have to hardcode a static array here.
-        let calendarEvents = {}; 
-
-        /** Renders the full calendar view. */
+        /** Renders the full calendar view based on in-memory events. */
         function renderCalendar(month, year) {
             const calendarGrid = document.getElementById('calendar-grid');
             const monthYearDisplay = document.getElementById('month-year-display');
@@ -306,8 +393,18 @@
 
             // Add day cells
             for (let i = 1; i <= daysInMonth; i++) {
-                // Since data is static, events will always be empty
-                const eventsHtml = ''; 
+                const day = i.toString().padStart(2, '0');
+                const monthStr = (month + 1).toString().padStart(2, '0');
+                const dateKey = `${year}-${monthStr}-${day}`;
+                
+                const dayEvents = staticEvents[dateKey] || [];
+                let eventsHtml = '';
+
+                if (dayEvents.length > 0) {
+                    eventsHtml = dayEvents.map(event => 
+                        `<div class="event-slot">${event.title}</div>`
+                    ).join('');
+                }
 
                 calendarGrid.innerHTML += `
                     <div class="calendar-day">
@@ -335,27 +432,31 @@
         
         /** Toggles between the homepage and the Agent Portal view. */
         function togglePortalView(loggedIn = false) {
-            const isPortal = document.getElementById('agent-portal').classList.contains('active');
             const targetEl = document.getElementById('agent-portal');
             const homeEl = document.getElementById('homepage-content');
             
-            if (!isPortal) {
+            if (loggedIn) {
                 homeEl.style.display = 'none';
                 targetEl.classList.add('active');
-                if (loggedIn) {
-                    document.getElementById('login-prompt').style.display = 'none';
-                    document.getElementById('portal-content').style.display = 'block';
-                    document.getElementById('agent-status').textContent = isAdmin ? 'Admin' : 'Agent';
-                    document.getElementById('current-agent-id').textContent = currentUserId;
-                    renderCalendar(currentMonth, currentYear); // Render calendar on login
-                } else {
-                    document.getElementById('login-prompt').style.display = 'block';
-                    document.getElementById('portal-content').style.display = 'none';
-                    setLoginStatus(true, 'Ready to Log In');
+                
+                document.getElementById('login-prompt').style.display = 'none';
+                document.getElementById('portal-content').style.display = 'block';
+                document.getElementById('agent-status').textContent = isAdmin ? 'Admin' : 'Agent';
+                document.getElementById('current-agent-id').textContent = currentUserId;
+                
+                // Show/Hide Admin sections
+                document.getElementById('admin-sections').style.display = isAdmin ? 'grid' : 'none';
+                
+                if (isAdmin) {
+                    renderAgentList(); // Render agent list when admin logs in
                 }
+                renderCalendar(currentMonth, currentYear); // Render calendar
             } else {
                 targetEl.classList.remove('active');
                 homeEl.style.display = 'block';
+                document.getElementById('login-prompt').style.display = 'block';
+                document.getElementById('portal-content').style.display = 'none';
+                setLoginStatus(true, 'Ready to Log In');
             }
         }
         
@@ -405,6 +506,35 @@
                 showMessage("Signed out. See you soon, Agent.");
             });
             
+            // --- Admin Panel Form Handlers (Non-Persistent) ---
+            
+            // Agent Creator Form
+            const agentCreatorForm = document.getElementById('agent-creator-form');
+            if (agentCreatorForm) {
+                agentCreatorForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const username = e.target.newUsername.value;
+                    const password = e.target.newPassword.value;
+                    const role = e.target.newRole.value;
+                    if (createAgent(username, password, role)) {
+                        e.target.reset(); // Clear form on success
+                    }
+                });
+            }
+            
+            // Event Scheduler Form
+            const eventSchedulerForm = document.getElementById('event-scheduler-form');
+            if (eventSchedulerForm) {
+                eventSchedulerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const title = e.target.eventTitle.value;
+                    const date = e.target.eventDate.value;
+                    if (scheduleEvent(title, date)) {
+                        e.target.reset(); // Clear form on success
+                    }
+                });
+            }
+
             // Formspree (Original Logic Kept)
             const form = document.getElementById("vcias-form");
             const thankyou = document.getElementById("thankyou");
@@ -590,14 +720,53 @@
                     <button class="logout-btn" id="logout-button">Log Out</button>
                 </div>
 
+                <!-- Admin Sections (Visible only if isAdmin = true) -->
+                <div id="admin-sections" class="admin-grid" style="display:none;">
+                    
+                    <!-- Agent Creator -->
+                    <div id="admin-agent-creator" class="admin-card">
+                        <h3 style="margin-top:0; color:var(--accent);">Agent Creator (In-Memory) 🪪</h3>
+                        <p style="color:#ff4d4d; font-weight:600; margin-top:0;">⚠️ **WARNING:** Data is NOT saved to a database and will be lost on refresh.</p>
+                        <form id="agent-creator-form" style="display:grid; gap:12px; grid-template-columns: 1fr 1fr;">
+                            <input type="text" name="newUsername" placeholder="New Agent Username" required>
+                            <input type="password" name="newPassword" placeholder="Temporary Password" required>
+                            <select name="newRole" required style="grid-column:span 2;">
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="Agent">Junior Agent</option>
+                                <option value="Admin">Admin Agent</option>
+                            </select>
+                            <button type="submit" class="btn pink" style="grid-column:span 2;">Create Agent (In-Memory)</button>
+                        </form>
+                        
+                        <div id="created-agents-list" style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
+                            <p style="font-weight:600; margin-bottom:5px;">Currently Loaded Agents:</p>
+                            <ul id="agent-list" style="list-style:disc; padding-left:20px; font-size:0.9rem;">
+                                <!-- Agent list rendered here by JS -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Event Scheduler -->
+                    <div id="admin-event-scheduler" class="admin-card">
+                        <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (In-Memory) 🗓️</h3>
+                        <p style="color:#ff4d4d; font-weight:600; margin-top:0;">⚠️ **WARNING:** Events are NOT saved to a database and will be lost on refresh.</p>
+                        <form id="event-scheduler-form" style="display:grid; gap:12px;">
+                            <input type="text" name="eventTitle" placeholder="Event Title" required>
+                            <input type="date" name="eventDate" required>
+                            <button type="submit" class="btn pink">Schedule Event (In-Memory)</button>
+                        </form>
+                    </div>
+
+                </div>
+                
                 <!-- Calendar Display -->
                 <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
-                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Static) 📅</h3>
-                    <p style="color:rgba(0,0,0,0.65); font-size:0.9rem;">Since the database was removed, this calendar does not save events.</p>
+                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (In-Memory) 📅</h3>
+                    <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">Events scheduled in this session are shown below.</p>
                     <div class="calendar-header">
-                        <button class="btn mint" onclick="changeMonth(-1)" id="prev-month"> &lt; Prev</button>
+                        <button class="btn mint" id="prev-month"> &lt; Prev</button>
                         <h3 id="month-year-display" style="margin:0;">Loading...</h3>
-                        <button class="btn mint" onclick="changeMonth(1)" id="next-month">Next &gt;</button>
+                        <button class="btn mint" id="next-month">Next &gt;</button>
                     </div>
                     
                     <div class="calendar-grid">
