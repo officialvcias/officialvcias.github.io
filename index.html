@@ -80,7 +80,8 @@
         .btn { padding:10px 14px; border-radius:12px; font-weight:700; text-decoration:none; display:inline-block; cursor: pointer; border: none;}
         .btn.mint { background: linear-gradient(90deg,var(--mint), var(--mint-dark)); color:#083f2e; box-shadow: 0 4px 12px rgba(46,139,87,0.25);}
         .btn.pink { background: linear-gradient(90deg,var(--pink), var(--pink-dark)); color:#2b1b21; box-shadow: 0 4px 12px rgba(255,141,170,0.25);}
-        .btn:hover { opacity: 0.9; }
+        .btn:hover:not(:disabled) { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         /* features */
         .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px;
             padding: 8px 24px 64px; max-width:1100px; margin: 6px auto 36px; width:calc(100% - 40px); }
@@ -102,7 +103,7 @@
         .veg-badge{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background: linear-gradient(90deg,var(--mint),var(--pink)); color:white; border-radius:999px; font-weight:700; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
         
         /* Form/Input styles */
-        input[type="text"], input[type="email"], input[type="password"], textarea, select {
+        input[type="text"], input[type="email"], input[type="password"], textarea, select, input[type="date"] {
             padding: 10px;
             border-radius: 10px;
             border: 1px solid rgba(0,0,0,0.07);
@@ -268,10 +269,11 @@
         let isAdmin = false;
         let appId = null;
 
-        // Initial admin agents (credentials hidden from source)
+        // Initial admin agents - NOTE: These credentials must be in the JS source
+        // to seed the database, but they are NOT used directly for login validation 
+        // after the initial seeding. The login always checks Firestore.
         const INITIAL_ADMINS = [
             { username: "AgentPotato", password: "vciasontop", isAdmin: true },
-            // dmNpYXNvbnRvcA== is Base64 for "vciasontop"
             { username: "agentbeans", password: "vciasontop", isAdmin: true } 
         ];
 
@@ -290,10 +292,22 @@
                 box.classList.remove('show');
             }, 4000);
         }
+        
+        /** Enables/disables the login button and updates the status. */
+        function setLoginStatus(isReady, message) {
+            const button = document.getElementById('agent-login-form')?.querySelector('button[type="submit"]');
+            const status = document.getElementById('login-status');
+            if (button) button.disabled = !isReady;
+            if (status) {
+                status.textContent = message;
+                status.style.color = isReady ? 'var(--accent)' : '#ff4d4d';
+            }
+        }
 
         // --- Firebase Setup & Auth ---
         async function initializeFirebase() {
             setLogLevel('Debug');
+            setLoginStatus(false, 'Initializing agent database...');
             try {
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
@@ -316,22 +330,25 @@
                     await signInAnonymously(auth);
                 }
 
+                // Wait for the admin agents to be initialized before setting up listeners
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
                         console.log("Firebase Auth Ready. User ID:", userId);
+                        initializeAdminAgents().then(() => {
+                            setLoginStatus(true, 'Ready to Log In');
+                            setupListenersAndRender();
+                        });
                     } else {
                         userId = null;
                         console.log("Firebase Auth Ready. User is anonymous/signed out.");
                     }
-                    // Run setup and initial rendering after auth state is known
-                    initializeAdminAgents();
-                    setupListenersAndRender();
                 });
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
                 showMessage("❌ Failed to initialize Firebase.", true);
+                setLoginStatus(false, 'Initialization Failed');
             }
         }
         
@@ -350,7 +367,7 @@
                         // Create the admin user if they don't exist
                         await setDoc(docRef, {
                             username: agent.username,
-                            password: agent.password, // WARNING: Plaintext password for demo simplicity.
+                            password: agent.password, // Plaintext for demo simplicity and internal array seeding
                             isAdmin: true,
                             createdAt: new Date().toISOString()
                         });
@@ -359,11 +376,13 @@
                 }
             } catch (error) {
                 console.error("Failed to initialize admin agents in Firestore:", error);
+                showMessage("❌ Error seeding initial admin accounts.", true);
             }
         }
 
         /** Handles Agent login by querying Firestore for credentials. */
         async function agentLogin(username, password) {
+            setLoginStatus(false, 'Authenticating...');
             let agentData = null;
 
             try {
@@ -381,25 +400,29 @@
                     const snapshot = await getDocs(q);
 
                     if (!snapshot.empty) {
-                        agentData = snapshot.docs[0].data();
+                        // Assuming usernames are unique, take the first match
+                        agentData = snapshot.docs[0].data(); 
                     }
                 }
                 
                 if (agentData) {
-                    // Authenticate against the stored password (still plaintext for this demo)
+                    // Authenticate against the stored password
                     if (agentData.password === password) {
                         isAdmin = agentData.isAdmin || false;
                         showMessage(`Welcome, ${isAdmin ? 'Admin' : 'Junior'} Agent ${username}!`);
                         togglePortalView(true);
+                        setLoginStatus(true, 'Ready to Log In'); // Reset status after successful login
                         return;
                     }
                 }
                 
                 showMessage("❌ Invalid agent username or password.", true);
+                setLoginStatus(true, 'Ready to Log In');
 
             } catch (error) {
                 console.error("Login Error:", error);
                 showMessage("❌ An error occurred during login.", true);
+                setLoginStatus(true, 'Ready to Log In');
             }
         }
 
@@ -415,7 +438,6 @@
             }
             
             try {
-                // Check general agents collection first
                 const agentsRef = collection(db, `artifacts/${appId}/public/data/vcias_agents`);
                 
                 // Check if username already exists in general agents
@@ -428,7 +450,7 @@
 
                 await addDoc(agentsRef, {
                     username: username,
-                    password: password, // WARNING: Storing plaintext password for demo simplicity.
+                    password: password,
                     isAdmin: shouldBeAdmin,
                     createdAt: new Date().toISOString()
                 });
@@ -465,10 +487,10 @@
                 
                 // Add new event
                 existingEvents.push({
-                    time: new Date().toLocaleTimeString(), // time of entry, not event time
                     description: description,
                     emoji: emoji,
-                    creatorId: userId
+                    creatorId: userId,
+                    timestamp: new Date().toISOString()
                 });
 
                 // Update the document
@@ -534,6 +556,12 @@
             monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
             calendarGrid.innerHTML = '';
 
+            // Add day names headers (since we cleared the grid)
+            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            dayNames.forEach(name => {
+                 calendarGrid.innerHTML += `<div class="day-name">${name}</div>`;
+            });
+            
             // Add empty cells for the start of the month
             for (let i = 0; i < firstDay; i++) {
                 calendarGrid.innerHTML += '<div class="calendar-day empty"></div>';
@@ -591,6 +619,11 @@
                 } else {
                     document.getElementById('login-prompt').style.display = 'block';
                     document.getElementById('portal-content').style.display = 'none';
+                    // Re-run status check in case initialization lagged
+                    const button = document.getElementById('agent-login-form')?.querySelector('button[type="submit"]');
+                    if(button && !button.disabled) {
+                         setLoginStatus(true, 'Ready to Log In');
+                    }
                 }
             } else {
                 targetEl.classList.remove('active');
@@ -629,6 +662,8 @@
             // Login Form Submission
             document.getElementById('agent-login-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
+                // Ensure the form is ready before attempting login
+                if (e.target.querySelector('button[type="submit"]').disabled) return; 
                 const user = e.target.username.value;
                 const pass = e.target.password.value;
                 await agentLogin(user, pass);
@@ -648,7 +683,7 @@
                 e.preventDefault();
                 const date = e.target.eventDate.value;
                 const desc = e.target.eventDescription.value;
-                const emoji = e.target.eventEmoji.value;
+                const emoji = document.getElementById('event-emoji-input').value; // Get hidden field value
                 await scheduleEvent(date, desc, emoji);
             });
             
@@ -847,10 +882,10 @@
                 <form id="agent-login-form" style="display:grid; gap:12px;">
                     <input type="text" name="username" placeholder="Agent Username" required>
                     <input type="password" name="password" placeholder="Password" required>
-                    <button type="submit" class="btn mint" style="margin-top:10px;">Log In</button>
+                    <button type="submit" class="btn mint" style="margin-top:10px;" disabled>Log In</button>
                 </form>
-                <p style="margin-top:20px; font-size:0.9rem; text-align:center; color:rgba(0,0,0,0.6);">
-                    Admin credentials are now securely stored in Firestore.
+                <p id="login-status" style="margin-top:15px; font-size:0.9rem; text-align:center; color:gray;">
+                    Initializing agent database...
                 </p>
             </div>
             
@@ -901,14 +936,7 @@
                     </div>
                     
                     <div class="calendar-grid">
-                        <div class="day-name">Sun</div>
-                        <div class="day-name">Mon</div>
-                        <div class="day-name">Tue</div>
-                        <div class="day-name">Wed</div>
-                        <div class="day-name">Thu</div>
-                        <div class="day-name">Fri</div>
-                        <div class="day-name">Sat</div>
-                        <!-- Calendar Days will be injected here by JS -->
+                        <!-- Calendar Headers and Days will be injected here by JS -->
                         <div id="calendar-grid"></div>
                     </div>
                 </div>
@@ -933,4 +961,3 @@
 
 </body>
 </html>
-
