@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>VCIAS Agent Portal (Persistent)</title>
+    <title>VCIAS Agent Portal (LocalStorage)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -166,7 +166,7 @@
             font-weight: 500;
             color: #0f4f3a;
             line-height: 1.2;
-            word-break: break-all; /* Ensure long words break on mobile */
+            word-break: break-all; 
             background: var(--mint-dark);
             padding: 2px 4px;
             border-radius: 4px;
@@ -206,6 +206,34 @@
             padding: 0;
         }
         
+        /* Agent List Delete Button */
+        .delete-btn {
+            background: #ff5c77;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-left: 10px;
+        }
+        .delete-btn:hover:not(:disabled) {
+            background: #e64562;
+        }
+        .delete-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #ccc;
+        }
+        #agent-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+        
         /* Admin Grid Layout for large screens */
         .admin-grid {
             display: grid;
@@ -227,26 +255,18 @@
         
     </style>
     
-    <script type="module">
-        // --- Firebase Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, doc, setDoc, deleteDoc, getDoc, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Debug tool
+    <script type="text/javascript">
         
-        // setLogLevel('Debug'); // Enable for debugging
+        // --- Global App State (LocalStorage Persistence) ---
         
-        // --- Global Firebase and App State ---
-        let app = null;
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let appId = null;
-        let isAuthReady = false;
-
-        // Persistent Data Storage (Live from Firestore)
-        let liveAgents = {}; 
-        let liveEvents = {}; 
+        const AGENTS_KEY = 'vcias_agents_v1';
+        const EVENTS_KEY = 'vcias_events_v1';
+        
+        // Use a simple, local ID for display purposes
+        let userId = 'local-id-' + Math.random().toString(36).substring(2, 10); 
+        let isUserAdmin = true; // Assume local user is an Admin
+        let liveAgents = {}; // Will be loaded from localStorage
+        let liveEvents = {}; // Will be loaded from localStorage
 
         // Calendar state
         const today = new Date();
@@ -255,6 +275,76 @@
         
         // --- Utility Functions ---
 
+        /** Returns default sample data for Agents. */
+        function getDefaultAgents() {
+            return {
+                // The current local user is always this ID
+                [userId]: { isAdmin: true, username: 'Local Admin Agent', creatorId: userId },
+                'agent-001': { isAdmin: false, username: 'Carrot Agent', creatorId: userId },
+                'agent-002': { isAdmin: false, username: 'Broccoli Bot', creatorId: userId }
+            };
+        }
+
+        /** Returns default sample data for Events. */
+        function getDefaultEvents() {
+            // Get today's date in YYYY-MM-DD format
+            const todayDate = new Date();
+            const year = todayDate.getFullYear();
+            const month = (todayDate.getMonth() + 1).toString().padStart(2, '0');
+            const day = todayDate.getDate().toString().padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            
+            return {
+                [todayStr]: [
+                    { title: 'Project Planning (Sample)', creator: 'Local Admin' }
+                ]
+            };
+        }
+        
+        /** Loads data from LocalStorage or returns default sample data. */
+        function loadData() {
+            // Load Agents
+            const storedAgents = localStorage.getItem(AGENTS_KEY);
+            if (storedAgents) {
+                try {
+                    liveAgents = JSON.parse(storedAgents);
+                    // Ensure the local user's ID is registered if it's the first time running locally
+                    if (!liveAgents[userId]) {
+                        liveAgents[userId] = { isAdmin: true, username: 'Local Admin Agent', creatorId: userId };
+                        saveAgents(); // Save the new local user
+                    }
+                } catch (e) {
+                    console.error("Error parsing stored agents, resetting data to defaults.", e);
+                    liveAgents = getDefaultAgents();
+                }
+            } else {
+                liveAgents = getDefaultAgents();
+            }
+            
+            // Load Events
+            const storedEvents = localStorage.getItem(EVENTS_KEY);
+            if (storedEvents) {
+                try {
+                    liveEvents = JSON.parse(storedEvents);
+                } catch (e) {
+                    console.error("Error parsing stored events, resetting data to defaults.", e);
+                    liveEvents = getDefaultEvents();
+                }
+            } else {
+                liveEvents = getDefaultEvents();
+            }
+        }
+        
+        /** Saves agents data to LocalStorage. */
+        function saveAgents() {
+            localStorage.setItem(AGENTS_KEY, JSON.stringify(liveAgents));
+        }
+
+        /** Saves events data to LocalStorage. */
+        function saveEvents() {
+            localStorage.setItem(EVENTS_KEY, JSON.stringify(liveEvents));
+        }
+        
         /** Shows a temporary toast message to the user. */
         function showMessage(text, isError = false) {
             const box = document.getElementById('message-box');
@@ -266,212 +356,74 @@
             }, 4000);
         }
         
-        /** Enables/disables the login button and updates the status. */
-        function setLoginStatus(isReady, message) {
-            const button = document.getElementById('secure-login-btn');
-            const status = document.getElementById('login-status');
-            if (button) button.disabled = !isReady;
-            if (status) {
-                status.textContent = message;
-                status.style.color = isReady ? 'var(--accent)' : '#ff4d4d';
-            }
-        }
-
-        // --- Firebase Setup & Auth ---
         
-        /** Initializes Firebase and handles the initial custom authentication. */
-        async function setupAuthAndDatabase() {
-            try {
-                // Global variables provided by the Canvas environment
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-vcias-app-id';
-
-                if (!firebaseConfig) {
-                    throw new Error("Firebase configuration not available.");
-                }
-
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // 1. Initial Authentication
-                setLoginStatus(false, 'Authenticating user securely...');
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    // Fallback to anonymous sign-in if no custom token is available
-                    await signInAnonymously(auth);
-                }
-
-                // 2. Auth State Listener
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        // Use a placeholder agent data for the current user (admin for simplicity)
-                        liveAgents[userId] = { isAdmin: true, username: user.email || 'Admin Agent ' + userId.substring(0, 8) };
-                        isAuthReady = true;
-                        
-                        // FIX: 500ms delay to ensure Firebase auth state is fully stabilized
-                        // before attempting the first real-time read, resolving transient errors.
-                        setTimeout(() => {
-                            subscribeToAgents();
-                            subscribeToEvents();
-                        }, 500); 
-                        
-                        togglePortalView(true);
-                        showMessage(`Securely signed in. Welcome back, Agent.`);
-                        setLoginStatus(true, 'Securely Authenticated');
-                    } else {
-                        userId = null;
-                        isAuthReady = true;
-                        togglePortalView(false);
-                        setLoginStatus(true, 'Click button to securely log in.');
-                    }
-                });
-
-            } catch (error) {
-                console.error("Firebase Setup Error:", error);
-                showMessage(`❌ Database Error: ${error.message}`, true);
-                setLoginStatus(false, 'Database Error');
-            }
-        }
-
-        // --- Firestore Data Subscriptions ---
+        // --- Agent Write Functions (LocalStorage) ---
         
-        /** Sets up real-time listener for the user's private list of agents. */
-        function subscribeToAgents() {
-            if (!userId) return; // Prevent subscription if not signed in
-
-            // Path uses user-specific private path: /artifacts/{appId}/users/{userId}/vcias_agents
-            const agentsPath = `/artifacts/${appId}/users/${userId}/vcias_agents`; 
-            const q = collection(db, agentsPath);
-
-            // onSnapshot provides real-time updates
-            onSnapshot(q, (snapshot) => {
-                const updatedAgents = {};
-                snapshot.forEach((doc) => {
-                    updatedAgents[doc.id] = { ...doc.data(), docId: doc.id };
-                });
-                liveAgents = updatedAgents;
-                renderAgentList();
-            }, (error) => {
-                // This error means the security rules are likely incorrect (Solved externally by user)
-                console.error("Error fetching agents:", error);
-                showMessage("❌ Failed to fetch agents list (Check Console for Permissions Error).", true);
-            });
-        }
-        
-        /** Sets up real-time listener for the user's private calendar events. */
-        function subscribeToEvents() {
-            if (!userId) return; // Prevent subscription if not signed in
-
-            // Path uses user-specific private path: /artifacts/{appId}/users/{userId}/vcias_events
-            const eventsPath = `/artifacts/${appId}/users/${userId}/vcias_events`; 
-            const q = collection(db, eventsPath);
-
-            // onSnapshot provides real-time updates
-            onSnapshot(q, (snapshot) => {
-                const updatedEvents = {};
-                snapshot.forEach((doc) => {
-                    const eventData = doc.data();
-                    // Events are grouped by date (YYYY-MM-DD) for easy calendar lookup
-                    const dateKey = eventData.date; 
-                    if (!updatedEvents[dateKey]) {
-                        updatedEvents[dateKey] = [];
-                    }
-                    updatedEvents[dateKey].push({ 
-                        title: eventData.title, 
-                        creator: eventData.creator, 
-                        docId: doc.id 
-                    });
-                });
-                liveEvents = updatedEvents;
-                renderCalendar(currentMonth, currentYear);
-            }, (error) => {
-                // This error means the security rules are likely incorrect (Solved externally by user)
-                console.error("Error fetching events:", error);
-                showMessage("❌ Failed to fetch events list (Check Console for Permissions Error).", true);
-            });
-        }
-        
-        // --- Admin Write Functions (Persistent) ---
-        
-        /** Adds a new agent document to Firestore. */
-        async function createAgent(username, password, role) {
-            if (!userId) {
-                showMessage("Must be signed in to create agents.", true);
-                return;
-            }
-            
-            // Uses user-specific private path: /artifacts/{appId}/users/{userId}/vcias_agents
-            const agentsRef = collection(db, `/artifacts/${appId}/users/${userId}/vcias_agents`);
-            const existingAgentQuery = query(agentsRef, where("username", "==", username));
-            
-            try {
-                // Check if agent username already exists
-                const querySnapshot = await getDocs(existingAgentQuery);
-                if (!querySnapshot.empty) {
-                    showMessage(`Agent ${username} already exists in your list.`, true);
-                    return false;
-                }
-                
-                // Add the new agent
-                await addDoc(agentsRef, {
-                    username: username,
-                    password: password, 
-                    isAdmin: role === 'Admin',
-                    creatorId: userId, // Link agent to the current user's DB entry
-                    createdAt: new Date().toISOString()
-                });
-
-                showMessage(`✅ Agent ${username} (${role}) created and saved to your private database.`);
-                return true;
-            } catch (error) {
-                console.error("Error creating agent:", error);
-                showMessage(`❌ Failed to create agent: ${error.message}`, true);
+        /** Adds a new agent to the in-memory object and saves to LocalStorage. */
+        function createAgent(username, password, role) {
+            // Check if agent username already exists
+            const exists = Object.values(liveAgents).some(agent => agent.username === username);
+            if (exists) {
+                showMessage(`Agent ${username} already exists in your local list.`, true);
                 return false;
             }
+            
+            const newAgentId = 'agent-' + Math.random().toString(36).substring(2, 6);
+            liveAgents[newAgentId] = {
+                isAdmin: role === 'Admin',
+                username: username,
+                password: password, 
+                creatorId: userId,
+            };
+
+            saveAgents(); // Save to LocalStorage
+            showMessage(`✅ Agent ${username} (${role}) created and saved to LocalStorage.`);
+            renderAgentList(); // Re-render the list immediately
+            return true;
         }
-        
-        /** Schedules a new event document to Firestore. */
-        async function scheduleEvent(title, dateString) {
-            if (!userId) {
-                showMessage("Must be signed in to schedule events.", true);
+
+        /** Deletes an agent from the in-memory object and saves to LocalStorage. */
+        function deleteAgent(agentId) {
+            if (agentId === userId) {
+                showMessage("❌ Cannot delete the current Local Admin Agent.", true);
                 return;
             }
-
-            // Uses user-specific private path: /artifacts/{appId}/users/{userId}/vcias_events
-            const eventsRef = collection(db, `/artifacts/${appId}/users/${userId}/vcias_events`);
-            
-            try {
-                await addDoc(eventsRef, {
-                    title: title,
-                    date: dateString, // YYYY-MM-DD
-                    creator: liveAgents[userId]?.username || userId.substring(0, 12),
-                    createdAt: new Date().toISOString()
-                });
+            if (liveAgents[agentId]) {
+                const deletedUsername = liveAgents[agentId].username;
+                delete liveAgents[agentId];
                 
-                showMessage(`✅ Event '${title}' scheduled for ${dateString} and saved to your private database.`);
-                return true;
-            } catch (error) {
-                console.error("Error scheduling event:", error);
-                showMessage(`❌ Failed to schedule event: ${error.message}`, true);
-                return false;
+                saveAgents(); // Save to LocalStorage
+                showMessage(`🗑️ Agent ${deletedUsername} deleted and saved to LocalStorage.`, false);
+                renderAgentList(); // Re-render the list immediately
             }
+        }
+        
+        /** Schedules a new event in the in-memory object and saves to LocalStorage. */
+        function scheduleEvent(title, dateString) {
+            if (!liveEvents[dateString]) {
+                liveEvents[dateString] = [];
+            }
+            
+            liveEvents[dateString].push({
+                title: title,
+                creator: liveAgents[userId].username,
+            });
+            
+            saveEvents(); // Save to LocalStorage
+            showMessage(`✅ Event '${title}' scheduled for ${dateString} and saved to LocalStorage.`);
+            renderCalendar(currentMonth, currentYear); // Re-render the calendar immediately
+            return true;
         }
 
         
         // --- Calendar Logic ---
 
-        /** Renders the full calendar view based on live events from Firestore. */
+        /** Renders the full calendar view. */
         function renderCalendar(month, year) {
             const calendarGrid = document.getElementById('calendar-grid');
             const monthYearDisplay = document.getElementById('month-year-display');
             if (!calendarGrid || !monthYearDisplay) return;
 
-            const date = new Date(year, month);
             const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -533,21 +485,44 @@
             if (!ul) return;
             ul.innerHTML = '';
             
-            // Convert object to array, filter out non-admin-created users, and sort
+            // Convert object to array, and sort by username
             const agentEntries = Object.entries(liveAgents)
-                .filter(([id, agent]) => agent.creatorId) // Only show agents created through the admin panel
                 .sort(([, a], [, b]) => a.username.localeCompare(b.username));
 
             if (agentEntries.length === 0) {
-                ul.innerHTML = '<li>No agents found. Use the form above to create one.</li>';
+                ul.innerHTML = '<li style="color:var(--pink-dark);">No agents found. Use the form above to create one.</li>';
                 return;
             }
 
             agentEntries.forEach(([id, agent]) => {
                 const role = agent.isAdmin ? 'Admin' : 'Agent';
+                const isCurrent = id === userId;
+
                 const li = document.createElement('li');
-                li.textContent = `${agent.username} (${role}) | DB ID: ${id.substring(0, 8)}`;
-                li.style.color = agent.isAdmin ? 'var(--pink-dark)' : 'var(--accent)';
+                
+                // Content span
+                const contentSpan = document.createElement('span');
+                contentSpan.textContent = `${agent.username} (${role}) | Local ID: ${id.substring(0, 8)}`;
+                contentSpan.style.color = agent.isAdmin ? 'var(--pink-dark)' : 'var(--accent)';
+                if (isCurrent) {
+                    contentSpan.innerHTML += ' <strong>(You)</strong>';
+                }
+                li.appendChild(contentSpan);
+
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-btn';
+                
+                if (isCurrent || agent.isAdmin) {
+                    deleteBtn.disabled = true;
+                    // Provide a title for disabled buttons for context
+                    deleteBtn.title = isCurrent ? "Cannot delete the logged-in agent." : "Cannot delete Admin agents.";
+                } else {
+                    deleteBtn.onclick = () => deleteAgent(id);
+                }
+
+                li.appendChild(deleteBtn);
                 ul.appendChild(li);
             });
         }
@@ -556,60 +531,75 @@
         // --- UI & Event Handlers ---
         
         /** Toggles between the homepage and the Agent Portal view. */
-        function togglePortalView(loggedIn = false) {
+        function togglePortalView(isLoggingIn) {
             const targetEl = document.getElementById('agent-portal');
             const homeEl = document.getElementById('homepage-content');
             
-            const currentUserData = liveAgents[userId];
-            const isAdmin = currentUserData ? currentUserData.isAdmin : false;
-
-            if (loggedIn) {
+            if (isLoggingIn) {
                 homeEl.style.display = 'none';
                 targetEl.classList.add('active');
                 
                 document.getElementById('login-prompt').style.display = 'none';
                 document.getElementById('portal-content').style.display = 'block';
-                document.getElementById('agent-status').textContent = isAdmin ? 'Admin' : 'Agent';
+                document.getElementById('agent-status').textContent = isUserAdmin ? 'Local Admin' : 'Agent';
                 document.getElementById('current-agent-id').textContent = userId.substring(0, 12);
                 
                 // Show/Hide Admin sections
-                document.getElementById('admin-sections').style.display = isAdmin ? 'grid' : 'none';
+                document.getElementById('admin-sections').style.display = isUserAdmin ? 'grid' : 'none';
                 
                 renderAgentList(); // Render agent list 
                 renderCalendar(currentMonth, currentYear); // Render calendar
             } else {
+                // If "logging out" (simulated), show the homepage
                 targetEl.classList.remove('active');
                 homeEl.style.display = 'block';
                 document.getElementById('login-prompt').style.display = 'block';
                 document.getElementById('portal-content').style.display = 'none';
+                // Reset form fields
+                document.getElementById('login-username').value = '';
+                document.getElementById('login-password').value = '';
+                document.getElementById('login-status').textContent = 'Connection established. Enter credentials.';
+                document.getElementById('login-status').style.color = 'gray';
+
             }
         }
         
         /** Handles all page-wide event listeners after the DOM loads. */
         window.onload = function() {
-            // 1. Disable Inspect Element (User Request) - Security theater
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            document.addEventListener('keydown', e => {
-              if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
-                e.preventDefault();
-                showMessage("✋ Access Restricted.", true);
-              }
-            });
+            // 1. Load Data from LocalStorage
+            loadData();
 
-            // 2. Initial Setup
-            setupAuthAndDatabase(); // Start Firebase and Auth initialization
-
-            // 3. Setup UI Interaction
+            // 2. Setup UI Interaction
             
-            // Attach toggle handlers to the navigation buttons
+            // --- Simulated Login Form Handler ---
+            const loginForm = document.getElementById('simulated-login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const username = document.getElementById('login-username').value;
+                    const password = document.getElementById('login-password').value;
+                    const status = document.getElementById('login-status');
+
+                    // --- Simulated Credential Check ---
+                    if (username === 'admin' && password === 'vcias') {
+                        togglePortalView(true);
+                        showMessage("Login successful. Welcome, Local Admin Agent!", false);
+                    } else {
+                        status.textContent = '❌ Invalid Credentials. Try again.';
+                        status.style.color = '#ff4d4d';
+                        showMessage("Login failed. Check username/password.", true);
+                    }
+                });
+            }
+
+            // Attach toggle handlers to the navigation buttons (now they scroll to the login)
             document.querySelectorAll('[data-action="toggle-portal"]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    if (!isAuthReady) {
-                        showMessage("Please wait for the secure login to initialize.", true);
-                        return;
-                    }
-                    togglePortalView(userId !== null); // Check if logged in
+                    // Show the portal section (which contains the login form)
+                    document.getElementById('agent-portal').style.display = 'block'; 
+                    // Scroll to the login section
+                    document.getElementById('agent-portal').scrollIntoView({ behavior: 'smooth' });
                 });
             });
 
@@ -617,25 +607,23 @@
             document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
             document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
             
-            // Agent Logout
-            document.getElementById('logout-button').addEventListener('click', async () => {
-                if (auth) {
-                    await signOut(auth);
-                    showMessage("Signed out. See you soon, Agent.");
-                }
+            // Agent Logout (Simulated)
+            document.getElementById('logout-button').addEventListener('click', () => {
+                showMessage("Simulated sign-out. Data is stored in your browser's LocalStorage.", false);
+                togglePortalView(false);
             });
             
-            // --- Admin Panel Form Handlers (Persistent) ---
+            // --- Admin Panel Form Handlers (LocalStorage) ---
             
             // Agent Creator Form
             const agentCreatorForm = document.getElementById('agent-creator-form');
             if (agentCreatorForm) {
-                agentCreatorForm.addEventListener('submit', async function(e) {
+                agentCreatorForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     const username = e.target.newUsername.value;
                     const password = e.target.newPassword.value;
                     const role = e.target.newRole.value;
-                    if (await createAgent(username, password, role)) {
+                    if (createAgent(username, password, role)) {
                         e.target.reset(); // Clear form on success
                     }
                 });
@@ -644,15 +632,18 @@
             // Event Scheduler Form
             const eventSchedulerForm = document.getElementById('event-scheduler-form');
             if (eventSchedulerForm) {
-                eventSchedulerForm.addEventListener('submit', async function(e) {
+                eventSchedulerForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     const title = e.target.eventTitle.value;
                     const date = e.target.eventDate.value;
-                    if (await scheduleEvent(title, date)) {
+                    if (scheduleEvent(title, date)) {
                         e.target.reset(); // Clear form on success
                     }
                 });
             }
+            
+            // Render initial calendar data immediately
+            renderCalendar(currentMonth, currentYear); 
 
             // Formspree (Original Logic Kept for Homepage Contact Form)
             const form = document.getElementById("vcias-form");
@@ -691,6 +682,7 @@
 
         // Make functions available globally for HTML elements (Calendar navigation buttons)
         window.changeMonth = changeMonth;
+        window.deleteAgent = deleteAgent;
 
     </script>
 </head>
@@ -736,13 +728,13 @@
                     <p class="lead">We’re a playful collective investigating the secret lives of vegetables, building veggie projects, and sharing recipes, art, and tiny experiments. Everyone is welcome — whether you love gardening, gadgets, or goofy conspiracy-free fun.</p>
 
                     <div class="stats" role="list" aria-label="Site stats">
+                        <div class="num-agents stat" role="listitem">
+                            <div class="num">3</div>
+                            <div class="lbl">Active Agents</div>
+                        </div>
                         <div class="stat" role="listitem">
                             <div class="num">1</div>
                             <div class="lbl">Active Projects</div>
-                        </div>
-                        <div class="stat" role="listitem">
-                            <div class="num">3</div>
-                            <div class="lbl">Community Members</div>
                         </div>
                         <div class="stat" role="listitem">
                             <div class="num">0.2</div>
@@ -812,31 +804,34 @@
             </section>
         </div>
         
-        <section id="agent-portal" class="portal-section">
-            <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
+        <section id="agent-portal" class="portal-section active"> <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
             
             <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px; text-align:center;">
-                <h3 style="margin-top:0;">Secure Agent Login 🔒</h3>
+                <h3 style="margin-top:0;">Local Agent Access 🔑</h3>
                 <p style="color:rgba(0,0,0,0.65); font-size:0.95rem;">
-                    Access is managed securely through your Canvas environment.
+                    Enter the simulated credentials (User: <strong>admin</strong>, Pass: <strong>vcias</strong>) to access the portal.
                 </p>
-                <button id="secure-login-btn" class="btn mint" data-action="toggle-portal" style="margin-top:10px;" disabled>Securely Log In</button>
+                <form id="simulated-login-form">
+                    <input type="text" id="login-username" placeholder="Username (admin)" style="margin-bottom:8px;" required>
+                    <input type="password" id="login-password" placeholder="Password (vcias)" required>
+                    <button id="secure-login-btn" type="submit" class="btn mint" style="margin-top:10px;">Secure Login</button>
+                </form>
                 <p id="login-status" style="margin-top:15px; font-size:0.9rem; text-align:center; color:gray;">
-                    Initializing database connection...
+                    Connection established. Enter credentials.
                 </p>
             </div>
             
             <div id="portal-content" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <p style="margin:0; font-weight:600;">Status: <span id="agent-status" style="color:var(--pink-dark);">Agent</span> | User ID: <span id="current-agent-id"></span></p>
-                    <button class="logout-btn" id="logout-button">Log Out</button>
+                    <p style="margin:0; font-weight:600;">Status: <span id="agent-status" style="color:var(--pink-dark);">Local Admin</span> | Local ID: <span id="current-agent-id"></span></p>
+                    <button class="logout-btn" id="logout-button">Simulate Log Out</button>
                 </div>
 
-                <div id="admin-sections" class="admin-grid" style="display:none;">
+                <div id="admin-sections" class="admin-grid">
                     
                     <div id="admin-agent-creator" class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Agent Creator (Persistent) 🪪</h3>
-                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ **Data is now saved and retrieved using Firestore.**</p>
+                        <h3 style="margin-top:0; color:var(--accent);">Agent Creator (LocalStorage) 🪪</h3>
+                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ Data will persist in your browser.</p>
                         <form id="agent-creator-form" style="display:grid; gap:12px; grid-template-columns: 1fr 1fr;">
                             <input type="text" name="newUsername" placeholder="New Agent Username" required>
                             <input type="password" name="newPassword" placeholder="Temporary Password" required>
@@ -845,31 +840,31 @@
                                 <option value="Agent">Junior Agent</option>
                                 <option value="Admin">Admin Agent</option>
                             </select>
-                            <button type="submit" class="btn pink" style="grid-column:span 2;">Create Agent (Save to DB)</button>
+                            <button type="submit" class="btn pink" style="grid-column:span 2;">Create Agent & Save</button>
                         </form>
                         
                         <div id="created-agents-list" style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
-                            <p style="font-weight:600; margin-bottom:5px;">Currently Active Agents:</p>
-                            <ul id="agent-list" style="list-style:disc; padding-left:20px; font-size:0.9rem;">
+                            <p style="font-weight:600; margin-bottom:5px;">Currently Active Agents (Click Delete to remove):</p>
+                            <ul id="agent-list" style="list-style:none; padding:0; font-size:0.9rem;">
                                 </ul>
                         </div>
                     </div>
 
                     <div id="admin-event-scheduler" class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (Persistent) 🗓️</h3>
-                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ **Events are now saved and updated in real-time.**</p>
+                        <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (LocalStorage) 🗓️</h3>
+                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ Data will persist in your browser.</p>
                         <form id="event-scheduler-form" style="display:grid; gap:12px;">
                             <input type="text" name="eventTitle" placeholder="Event Title" required>
                             <input type="date" name="eventDate" required>
-                            <button type="submit" class="btn pink">Schedule Event (Save to DB)</button>
+                            <button type="submit" class="btn pink">Schedule Event & Save</button>
                         </form>
                     </div>
 
                 </div>
                 
                 <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
-                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Live Data) 📅</h3>
-                    <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">Real-time events from the database are displayed below.</p>
+                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Local Data) 📅</h3>
+                    <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">Local events stored in your browser are displayed below.</p>
                     <div class="calendar-header">
                         <button class="btn mint" id="prev-month"> &lt; Prev</button>
                         <h3 id="month-year-display" style="margin:0;">Loading...</h3>
