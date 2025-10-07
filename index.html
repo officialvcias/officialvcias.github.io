@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>VCIAS Agent Portal (LocalStorage)</title>
+    <title>VCIAS Agent Portal (LocalStorage - Full Login)</title>
+    <!-- Simple, friendly font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Load Inter font for consistency with other generated files -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root{
@@ -262,9 +264,10 @@
         const AGENTS_KEY = 'vcias_agents_v1';
         const EVENTS_KEY = 'vcias_events_v1';
         
-        // Use a simple, local ID for display purposes
+        // Use a simple, local ID for display purposes (this ID changes on every load, 
+        // but 'Local Admin Agent' is always the default identity if not logged in as a created agent)
         let userId = 'local-id-' + Math.random().toString(36).substring(2, 10); 
-        let isUserAdmin = true; // Assume local user is an Admin
+        let isUserAdmin = false; // Initially false, requires login
         let liveAgents = {}; // Will be loaded from localStorage
         let liveEvents = {}; // Will be loaded from localStorage
 
@@ -277,11 +280,16 @@
 
         /** Returns default sample data for Agents. */
         function getDefaultAgents() {
+            // Note: The default admin needs a hardcoded password for the initial login
             return {
-                // The current local user is always this ID
-                [userId]: { isAdmin: true, username: 'Local Admin Agent', creatorId: userId },
-                'agent-001': { isAdmin: false, username: 'Carrot Agent', creatorId: userId },
-                'agent-002': { isAdmin: false, username: 'Broccoli Bot', creatorId: userId }
+                [userId]: { 
+                    isAdmin: true, 
+                    username: 'Local Admin Agent', 
+                    password: 'vcias', // Default password for initial local admin
+                    creatorId: userId 
+                },
+                'agent-001': { isAdmin: false, username: 'Carrot Agent', password: 'temp1', creatorId: userId },
+                'agent-002': { isAdmin: false, username: 'Broccoli Bot', password: 'temp2', creatorId: userId }
             };
         }
 
@@ -296,7 +304,7 @@
             
             return {
                 [todayStr]: [
-                    { title: 'Project Planning (Sample)', creator: 'Local Admin' }
+                    { title: 'Project Planning (Sample)', creator: 'Local Admin Agent' }
                 ]
             };
         }
@@ -305,14 +313,26 @@
         function loadData() {
             // Load Agents
             const storedAgents = localStorage.getItem(AGENTS_KEY);
+            const defaultAgent = getDefaultAgents()[userId];
+
             if (storedAgents) {
                 try {
                     liveAgents = JSON.parse(storedAgents);
-                    // Ensure the local user's ID is registered if it's the first time running locally
-                    if (!liveAgents[userId]) {
-                        liveAgents[userId] = { isAdmin: true, username: 'Local Admin Agent', creatorId: userId };
-                        saveAgents(); // Save the new local user
+                    
+                    // CRITICAL FIX: Ensure the new local user ID is registered
+                    // AND that the default admin has the correct password if loaded from old storage.
+                    if (liveAgents[userId]) {
+                         // If the ID exists (e.g., if a previous Local Admin Agent was stored)
+                         if (!liveAgents[userId].password) {
+                            liveAgents[userId].password = defaultAgent.password; // Add the default password
+                            saveAgents();
+                         }
+                    } else {
+                        // If a new session/local ID is created, register the default admin user with correct password
+                        liveAgents[userId] = defaultAgent;
+                        saveAgents(); 
                     }
+                    
                 } catch (e) {
                     console.error("Error parsing stored agents, resetting data to defaults.", e);
                     liveAgents = getDefaultAgents();
@@ -368,6 +388,12 @@
                 return false;
             }
             
+            // Simple check to ensure a password was entered
+            if (!password || password.length < 1) {
+                 showMessage(`Password cannot be empty.`, true);
+                 return false;
+            }
+
             const newAgentId = 'agent-' + Math.random().toString(36).substring(2, 6);
             liveAgents[newAgentId] = {
                 isAdmin: role === 'Admin',
@@ -377,17 +403,19 @@
             };
 
             saveAgents(); // Save to LocalStorage
-            showMessage(`✅ Agent ${username} (${role}) created and saved to LocalStorage.`);
+            showMessage(`✅ Agent ${username} (${role}) created and saved to LocalStorage.`, false);
             renderAgentList(); // Re-render the list immediately
             return true;
         }
 
         /** Deletes an agent from the in-memory object and saves to LocalStorage. */
         function deleteAgent(agentId) {
+            // Prevent deleting the currently logged-in user
             if (agentId === userId) {
-                showMessage("❌ Cannot delete the current Local Admin Agent.", true);
+                showMessage("❌ Cannot delete the currently logged-in agent.", true);
                 return;
             }
+            
             if (liveAgents[agentId]) {
                 const deletedUsername = liveAgents[agentId].username;
                 delete liveAgents[agentId];
@@ -410,7 +438,7 @@
             });
             
             saveEvents(); // Save to LocalStorage
-            showMessage(`✅ Event '${title}' scheduled for ${dateString} and saved to LocalStorage.`);
+            showMessage(`✅ Event '${title}' scheduled for ${dateString} and saved to LocalStorage.`, false);
             renderCalendar(currentMonth, currentYear); // Re-render the calendar immediately
             return true;
         }
@@ -514,6 +542,7 @@
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.className = 'delete-btn';
                 
+                // Disable deletion for the currently logged-in user and any Admin agent
                 if (isCurrent || agent.isAdmin) {
                     deleteBtn.disabled = true;
                     // Provide a title for disabled buttons for context
@@ -541,7 +570,7 @@
                 
                 document.getElementById('login-prompt').style.display = 'none';
                 document.getElementById('portal-content').style.display = 'block';
-                document.getElementById('agent-status').textContent = isUserAdmin ? 'Local Admin' : 'Agent';
+                document.getElementById('agent-status').textContent = isUserAdmin ? 'Local Admin' : 'Junior Agent';
                 document.getElementById('current-agent-id').textContent = userId.substring(0, 12);
                 
                 // Show/Hide Admin sections
@@ -555,6 +584,7 @@
                 homeEl.style.display = 'block';
                 document.getElementById('login-prompt').style.display = 'block';
                 document.getElementById('portal-content').style.display = 'none';
+                
                 // Reset form fields
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
@@ -568,7 +598,7 @@
         window.onload = function() {
             // 1. Load Data from LocalStorage
             loadData();
-
+            
             // 2. Setup UI Interaction
             
             // --- Simulated Login Form Handler ---
@@ -580,11 +610,30 @@
                     const password = document.getElementById('login-password').value;
                     const status = document.getElementById('login-status');
 
-                    // --- Simulated Credential Check ---
-                    if (username === 'admin' && password === 'vcias') {
+                    // --- NEW: Simulated Credential Check against ALL LocalStorage Agents ---
+                    let loggedInAgent = null;
+                    let loggedInId = null;
+
+                    for (const id in liveAgents) {
+                        const agent = liveAgents[id];
+                        // Check if the entered username matches AND the entered password matches the stored password
+                        if (agent.username === username && agent.password === password) {
+                            loggedInAgent = agent;
+                            loggedInId = id;
+                            break; 
+                        }
+                    }
+
+                    if (loggedInAgent) {
+                        // Set global state based on the successful login
+                        userId = loggedInId;
+                        isUserAdmin = loggedInAgent.isAdmin;
+                        
+                        // Proceed to portal view
                         togglePortalView(true);
-                        showMessage("Login successful. Welcome, Local Admin Agent!", false);
+                        showMessage(`Login successful. Welcome, ${loggedInAgent.username}!`, false);
                     } else {
+                        // Handle failed login
                         status.textContent = '❌ Invalid Credentials. Try again.';
                         status.style.color = '#ff4d4d';
                         showMessage("Login failed. Check username/password.", true);
@@ -592,7 +641,7 @@
                 });
             }
 
-            // Attach toggle handlers to the navigation buttons (now they scroll to the login)
+            // Attach toggle handlers to the navigation buttons 
             document.querySelectorAll('[data-action="toggle-portal"]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -609,6 +658,10 @@
             
             // Agent Logout (Simulated)
             document.getElementById('logout-button').addEventListener('click', () => {
+                // IMPORTANT: When logging out, we reset the local user ID to a new, non-logged-in one.
+                userId = 'local-id-' + Math.random().toString(36).substring(2, 10);
+                isUserAdmin = false;
+                
                 showMessage("Simulated sign-out. Data is stored in your browser's LocalStorage.", false);
                 togglePortalView(false);
             });
@@ -642,8 +695,9 @@
                 });
             }
             
-            // Render initial calendar data immediately
-            renderCalendar(currentMonth, currentYear); 
+            // Since we start logged out, we don't render content immediately.
+            // We ensure the login prompt is visible on load.
+            togglePortalView(false); 
 
             // Formspree (Original Logic Kept for Homepage Contact Form)
             const form = document.getElementById("vcias-form");
@@ -691,6 +745,7 @@
     <header>
         <a href="/" class="brand" aria-label="VCIAS home">
             <div class="logo" role="img" aria-hidden="false" title="VCIAS logo">
+                <!-- small veggie + spy-lens SVG -->
                 <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <defs>
                         <linearGradient id="g1" x1="0" x2="1">
@@ -715,12 +770,14 @@
         <nav aria-label="Main navigation">
             <a href="#about">About</a>
             <a href="#projects">Projects</a>
-            <a href="#" data-action="toggle-portal">Agent Portal</a> <a href="#join" class="btn-primary">Join VCIAS</a>
+            <a href="#" data-action="toggle-portal">Agent Portal</a> <!-- Nav Link -->
+            <a href="#join" class="btn-primary">Join VCIAS</a>
         </nav>
     </header>
 
     <main>
-        <div id="homepage-content">
+        <!-- Homepage Content -->
+        <div id="homepage-content" style="display:block;">
             <section class="hero" aria-labelledby="hero-title">
                 <div class="hero-card">
                     <span class="kicker">Community • Grow • 67</span>
@@ -788,6 +845,7 @@
                     <h2 style="margin-top:0;">Join VCIAS</h2>
                     <p style="margin:6px 0 12px 0; color:rgba(0,0,0,0.65);">We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
 
+                    <!-- Formspree Form (Kept) -->
                     <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST"
                         style="display:grid; gap:8px; grid-template-columns: 1fr 1fr; align-items:center;">
                         <input type="text" name="name" placeholder="Your name" aria-label="Your name" required>
@@ -804,16 +862,19 @@
             </section>
         </div>
         
-        <section id="agent-portal" class="portal-section active"> <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
+        <!-- Agent Portal View (Hidden by default) -->
+        <section id="agent-portal" class="portal-section"> 
+            <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
             
-            <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px; text-align:center;">
+            <!-- Login Prompt (Simulated login in this local version) -->
+            <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px; text-align:center; display:block;">
                 <h3 style="margin-top:0;">Local Agent Access 🔑</h3>
                 <p style="color:rgba(0,0,0,0.65); font-size:0.95rem;">
-                    Enter the simulated credentials (User: <strong>admin</strong>, Pass: <strong>vcias</strong>) to access the portal.
+                    Use the default credentials (User: <strong>admin</strong>, Pass: <strong>vcias</strong>) or the username/password of an agent you created.
                 </p>
                 <form id="simulated-login-form">
-                    <input type="text" id="login-username" placeholder="Username (admin)" style="margin-bottom:8px;" required>
-                    <input type="password" id="login-password" placeholder="Password (vcias)" required>
+                    <input type="text" id="login-username" placeholder="Username" style="margin-bottom:8px;" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
                     <button id="secure-login-btn" type="submit" class="btn mint" style="margin-top:10px;">Secure Login</button>
                 </form>
                 <p id="login-status" style="margin-top:15px; font-size:0.9rem; text-align:center; color:gray;">
@@ -821,14 +882,17 @@
                 </p>
             </div>
             
+            <!-- Portal Content (Hidden until login) -->
             <div id="portal-content" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <p style="margin:0; font-weight:600;">Status: <span id="agent-status" style="color:var(--pink-dark);">Local Admin</span> | Local ID: <span id="current-agent-id"></span></p>
                     <button class="logout-btn" id="logout-button">Simulate Log Out</button>
                 </div>
 
+                <!-- Admin Sections (Visible only if isAdmin = true) -->
                 <div id="admin-sections" class="admin-grid">
                     
+                    <!-- Agent Creator -->
                     <div id="admin-agent-creator" class="admin-card">
                         <h3 style="margin-top:0; color:var(--accent);">Agent Creator (LocalStorage) 🪪</h3>
                         <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ Data will persist in your browser.</p>
@@ -846,10 +910,12 @@
                         <div id="created-agents-list" style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
                             <p style="font-weight:600; margin-bottom:5px;">Currently Active Agents (Click Delete to remove):</p>
                             <ul id="agent-list" style="list-style:none; padding:0; font-size:0.9rem;">
-                                </ul>
+                                <!-- Agent list rendered here by JS -->
+                            </ul>
                         </div>
                     </div>
 
+                    <!-- Event Scheduler -->
                     <div id="admin-event-scheduler" class="admin-card">
                         <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (LocalStorage) 🗓️</h3>
                         <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ Data will persist in your browser.</p>
@@ -862,6 +928,7 @@
 
                 </div>
                 
+                <!-- Calendar Display -->
                 <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
                     <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Local Data) 📅</h3>
                     <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">Local events stored in your browser are displayed below.</p>
@@ -891,6 +958,7 @@
     </footer>
 </div>
 
+<!-- Custom Message Box for alerts -->
 <div id="message-box" class="message-box"></div>
 
 </body>
