@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>VCIAS Agent Portal (LocalStorage - Full Login)</title>
+    <title>VCIAS Agent Portal (LocalStorage - Full Login FIX)</title>
     <!-- Simple, friendly font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <!-- Load Inter font for consistency with other generated files -->
@@ -264,8 +264,10 @@
         const AGENTS_KEY = 'vcias_agents_v1';
         const EVENTS_KEY = 'vcias_events_v1';
         
-        // Use a simple, local ID for display purposes (this ID changes on every load, 
-        // but 'Local Admin Agent' is always the default identity if not logged in as a created agent)
+        // ** FIX: Use a fixed ID for the default admin user **
+        const ADMIN_ID = 'vcias-admin'; 
+        
+        // Use a simple, local ID for display purposes (this ID changes on every load until logged in)
         let userId = 'local-id-' + Math.random().toString(36).substring(2, 10); 
         let isUserAdmin = false; // Initially false, requires login
         let liveAgents = {}; // Will be loaded from localStorage
@@ -280,17 +282,18 @@
 
         /** Returns default sample data for Agents. */
         function getDefaultAgents() {
-            // Note: The default admin needs a hardcoded password for the initial login
-            return {
-                [userId]: { 
+            // Note: The default admin now uses the fixed ADMIN_ID
+            const defaults = {
+                [ADMIN_ID]: { 
                     isAdmin: true, 
-                    username: 'Local Admin Agent', 
+                    username: 'admin', // Use 'admin' as the username
                     password: 'vcias', // Default password for initial local admin
-                    creatorId: userId 
+                    creatorId: ADMIN_ID 
                 },
-                'agent-001': { isAdmin: false, username: 'Carrot Agent', password: 'temp1', creatorId: userId },
-                'agent-002': { isAdmin: false, username: 'Broccoli Bot', password: 'temp2', creatorId: userId }
+                'agent-001': { isAdmin: false, username: 'Carrot Agent', password: 'temp1', creatorId: ADMIN_ID },
+                'agent-002': { isAdmin: false, username: 'Broccoli Bot', password: 'temp2', creatorId: ADMIN_ID }
             };
+            return defaults;
         }
 
         /** Returns default sample data for Events. */
@@ -304,7 +307,7 @@
             
             return {
                 [todayStr]: [
-                    { title: 'Project Planning (Sample)', creator: 'Local Admin Agent' }
+                    { title: 'Project Planning (Sample)', creator: 'admin' }
                 ]
             };
         }
@@ -313,24 +316,23 @@
         function loadData() {
             // Load Agents
             const storedAgents = localStorage.getItem(AGENTS_KEY);
-            const defaultAgent = getDefaultAgents()[userId];
 
             if (storedAgents) {
                 try {
                     liveAgents = JSON.parse(storedAgents);
                     
-                    // CRITICAL FIX: Ensure the new local user ID is registered
-                    // AND that the default admin has the correct password if loaded from old storage.
-                    if (liveAgents[userId]) {
-                         // If the ID exists (e.g., if a previous Local Admin Agent was stored)
-                         if (!liveAgents[userId].password) {
-                            liveAgents[userId].password = defaultAgent.password; // Add the default password
-                            saveAgents();
-                         }
-                    } else {
-                        // If a new session/local ID is created, register the default admin user with correct password
-                        liveAgents[userId] = defaultAgent;
-                        saveAgents(); 
+                    // ** FIX CONTINUED: Ensure the fixed ADMIN_ID is always present and correct **
+                    const defaultAdmin = getDefaultAgents()[ADMIN_ID];
+                    if (!liveAgents[ADMIN_ID]) {
+                        // If the fixed admin ID is missing (new installation/cleared cache), add it.
+                        liveAgents[ADMIN_ID] = defaultAdmin;
+                        saveAgents();
+                    } else if (liveAgents[ADMIN_ID].username !== defaultAdmin.username || liveAgents[ADMIN_ID].password !== defaultAdmin.password) {
+                        // If it exists but has wrong credentials (e.g., loaded from very old broken storage), ensure they are correct.
+                        liveAgents[ADMIN_ID].username = defaultAdmin.username;
+                        liveAgents[ADMIN_ID].password = defaultAdmin.password;
+                        liveAgents[ADMIN_ID].isAdmin = true;
+                        saveAgents();
                     }
                     
                 } catch (e) {
@@ -339,6 +341,7 @@
                 }
             } else {
                 liveAgents = getDefaultAgents();
+                saveAgents(); // Save defaults immediately if LocalStorage was empty
             }
             
             // Load Events
@@ -413,6 +416,11 @@
             // Prevent deleting the currently logged-in user
             if (agentId === userId) {
                 showMessage("❌ Cannot delete the currently logged-in agent.", true);
+                return;
+            }
+             // Prevent deleting the fixed admin agent
+            if (agentId === ADMIN_ID) {
+                showMessage("❌ Cannot delete the default 'admin' agent.", true);
                 return;
             }
             
@@ -525,6 +533,7 @@
             agentEntries.forEach(([id, agent]) => {
                 const role = agent.isAdmin ? 'Admin' : 'Agent';
                 const isCurrent = id === userId;
+                const isDefaultAdmin = id === ADMIN_ID; // Check for the fixed admin ID
 
                 const li = document.createElement('li');
                 
@@ -542,11 +551,11 @@
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.className = 'delete-btn';
                 
-                // Disable deletion for the currently logged-in user and any Admin agent
-                if (isCurrent || agent.isAdmin) {
+                // Disable deletion for the currently logged-in user AND the default admin
+                if (isCurrent || isDefaultAdmin) {
                     deleteBtn.disabled = true;
                     // Provide a title for disabled buttons for context
-                    deleteBtn.title = isCurrent ? "Cannot delete the logged-in agent." : "Cannot delete Admin agents.";
+                    deleteBtn.title = isCurrent ? "Cannot delete the logged-in agent." : "Cannot delete the default 'admin' agent.";
                 } else {
                     deleteBtn.onclick = () => deleteAgent(id);
                 }
@@ -571,7 +580,7 @@
                 document.getElementById('login-prompt').style.display = 'none';
                 document.getElementById('portal-content').style.display = 'block';
                 document.getElementById('agent-status').textContent = isUserAdmin ? 'Local Admin' : 'Junior Agent';
-                document.getElementById('current-agent-id').textContent = userId.substring(0, 12);
+                document.getElementById('current-agent-id').textContent = userId; // Show full ID for context
                 
                 // Show/Hide Admin sections
                 document.getElementById('admin-sections').style.display = isUserAdmin ? 'grid' : 'none';
@@ -610,7 +619,7 @@
                     const password = document.getElementById('login-password').value;
                     const status = document.getElementById('login-status');
 
-                    // --- NEW: Simulated Credential Check against ALL LocalStorage Agents ---
+                    // Simulated Credential Check against ALL LocalStorage Agents
                     let loggedInAgent = null;
                     let loggedInId = null;
 
@@ -873,7 +882,7 @@
                     Use the default credentials (User: <strong>admin</strong>, Pass: <strong>vcias</strong>) or the username/password of an agent you created.
                 </p>
                 <form id="simulated-login-form">
-                    <input type="text" id="login-username" placeholder="Username" style="margin-bottom:8px;" required>
+                    <input type="text" id="login-username" placeholder="Username" required>
                     <input type="password" id="login-password" placeholder="Password" required>
                     <button id="secure-login-btn" type="submit" class="btn mint" style="margin-top:10px;">Secure Login</button>
                 </form>
