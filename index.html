@@ -151,7 +151,7 @@
             position: relative;
         }
         .calendar-day.empty {
-            background: rgba(240, 240, 240, 0.4);
+            background: rgba( hated240, 240, 240, 0.4);
         }
         .day-number {
             font-weight: 700;
@@ -263,6 +263,7 @@
         
         const AGENTS_KEY = 'vcias_agents_v1';
         const EVENTS_KEY = 'vcias_events_v1';
+        const CHAT_KEY = 'vcias_agent_chat_v1';           // ← NEW: Chat storage
         
         // ** FIX: Use a fixed ID for the default admin user **
         const ADMIN_ID = 'vcias-admin'; 
@@ -272,6 +273,7 @@
         let isUserAdmin = false; // Initially false, requires login
         let liveAgents = {}; // Will be loaded from localStorage
         let liveEvents = {}; // Will be loaded from localStorage
+        let chatMessages = []; // ← NEW: Chat messages
 
         // Calendar state
         const today = new Date();
@@ -282,12 +284,11 @@
 
         /** Returns default sample data for Agents. */
         function getDefaultAgents() {
-            // Note: The default admin now uses the fixed ADMIN_ID
             const defaults = {
                 [ADMIN_ID]: { 
                     isAdmin: true, 
-                    username: 'admin', // Use 'admin' as the username
-                    password: 'vcias', // Default password for initial local admin
+                    username: 'admin',
+                    password: 'vcias',
                     creatorId: ADMIN_ID 
                 },
                 'agent-001': { isAdmin: false, username: 'Carrot Agent', password: 'temp1', creatorId: ADMIN_ID },
@@ -298,7 +299,6 @@
 
         /** Returns default sample data for Events. */
         function getDefaultEvents() {
-            // Get today's date in YYYY-MM-DD format
             const todayDate = new Date();
             const year = todayDate.getFullYear();
             const month = (todayDate.getMonth() + 1).toString().padStart(2, '0');
@@ -316,45 +316,45 @@
         function loadData() {
             // Load Agents
             const storedAgents = localStorage.getItem(AGENTS_KEY);
-
             if (storedAgents) {
                 try {
                     liveAgents = JSON.parse(storedAgents);
-                    
-                    // ** FIX CONTINUED: Ensure the fixed ADMIN_ID is always present and correct **
                     const defaultAdmin = getDefaultAgents()[ADMIN_ID];
                     if (!liveAgents[ADMIN_ID]) {
-                        // If the fixed admin ID is missing (new installation/cleared cache), add it.
                         liveAgents[ADMIN_ID] = defaultAdmin;
                         saveAgents();
                     } else if (liveAgents[ADMIN_ID].username !== defaultAdmin.username || liveAgents[ADMIN_ID].password !== defaultAdmin.password) {
-                        // If it exists but has wrong credentials (e.g., loaded from very old broken storage), ensure they are correct.
                         liveAgents[ADMIN_ID].username = defaultAdmin.username;
                         liveAgents[ADMIN_ID].password = defaultAdmin.password;
                         liveAgents[ADMIN_ID].isAdmin = true;
                         saveAgents();
                     }
-                    
                 } catch (e) {
                     console.error("Error parsing stored agents, resetting data to defaults.", e);
                     liveAgents = getDefaultAgents();
                 }
             } else {
                 liveAgents = getDefaultAgents();
-                saveAgents(); // Save defaults immediately if LocalStorage was empty
+                saveAgents();
             }
             
             // Load Events
             const storedEvents = localStorage.getItem(EVENTS_KEY);
             if (storedEvents) {
-                try {
-                    liveEvents = JSON.parse(storedEvents);
-                } catch (e) {
+                try { liveEvents = JSON.parse(storedEvents); }
+                catch (e) {
                     console.error("Error parsing stored events, resetting data to defaults.", e);
                     liveEvents = getDefaultEvents();
                 }
             } else {
                 liveEvents = getDefaultEvents();
+            }
+
+            // Load Chat Messages
+            const storedChat = localStorage.getItem(CHAT_KEY);
+            if (storedChat) {
+                try { chatMessages = JSON.parse(storedChat); }
+                catch(e) { chatMessages = []; }
             }
         }
         
@@ -366,6 +366,11 @@
         /** Saves events data to LocalStorage. */
         function saveEvents() {
             localStorage.setItem(EVENTS_KEY, JSON.stringify(liveEvents));
+        }
+
+        /** Saves chat messages to LocalStorage. */
+        function saveChat() {
+            localStorage.setItem(CHAT_KEY, JSON.stringify(chatMessages));
         }
         
         /** Shows a temporary toast message to the user. */
@@ -382,16 +387,12 @@
         
         // --- Agent Write Functions (LocalStorage) ---
         
-        /** Adds a new agent to the in-memory object and saves to LocalStorage. */
         function createAgent(username, password, role) {
-            // Check if agent username already exists
             const exists = Object.values(liveAgents).some(agent => agent.username === username);
             if (exists) {
                 showMessage(`Agent ${username} already exists in your local list.`, true);
                 return false;
             }
-            
-            // Simple check to ensure a password was entered
             if (!password || password.length < 1) {
                  showMessage(`Password cannot be empty.`, true);
                  return false;
@@ -405,80 +406,69 @@
                 creatorId: userId,
             };
 
-            saveAgents(); // Save to LocalStorage
-            showMessage(`✅ Agent ${username} (${role}) created and saved to LocalStorage.`, false);
-            renderAgentList(); // Re-render the list immediately
+            saveAgents();
+            showMessage(`Agent ${username} (${role}) created and saved to LocalStorage.`, false);
+            renderAgentList();
             return true;
         }
 
-        /** Deletes an agent from the in-memory object and saves to LocalStorage. */
         function deleteAgent(agentId) {
-            // Prevent deleting the currently logged-in user
             if (agentId === userId) {
-                showMessage("❌ Cannot delete the currently logged-in agent.", true);
+                showMessage("Cannot delete the currently logged-in agent.", true);
                 return;
             }
-             // Prevent deleting the fixed admin agent
             if (agentId === ADMIN_ID) {
-                showMessage("❌ Cannot delete the default 'admin' agent.", true);
+                showMessage("Cannot delete the default 'admin' agent.", true);
                 return;
             }
             
             if (liveAgents[agentId]) {
                 const deletedUsername = liveAgents[agentId].username;
                 delete liveAgents[agentId];
-                
-                saveAgents(); // Save to LocalStorage
-                showMessage(`🗑️ Agent ${deletedUsername} deleted and saved to LocalStorage.`, false);
-                renderAgentList(); // Re-render the list immediately
+                saveAgents();
+                showMessage(`Agent ${deletedUsername} deleted and saved to LocalStorage.`, false);
+                renderAgentList();
             }
         }
         
-        /** Schedules a new event in the in-memory object and saves to LocalStorage. */
         function scheduleEvent(title, dateString) {
             if (!liveEvents[dateString]) {
                 liveEvents[dateString] = [];
             }
-            
             liveEvents[dateString].push({
                 title: title,
                 creator: liveAgents[userId].username,
             });
-            
-            saveEvents(); // Save to LocalStorage
-            showMessage(`✅ Event '${title}' scheduled for ${dateString} and saved to LocalStorage.`, false);
-            renderCalendar(currentMonth, currentYear); // Re-render the calendar immediately
+            saveEvents();
+            showMessage(`Event '${title}' scheduled for ${dateString} and saved to LocalStorage.`, false);
+            renderCalendar(currentMonth, currentYear);
             return true;
         }
 
         
         // --- Calendar Logic ---
 
-        /** Renders the full calendar view. */
         function renderCalendar(month, year) {
             const calendarGrid = document.getElementById('calendar-grid');
             const monthYearDisplay = document.getElementById('month-year-display');
             if (!calendarGrid || !monthYearDisplay) return;
 
-            const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) to 6 (Sat)
+            const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
             monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
             calendarGrid.innerHTML = '';
 
-            // Add day names headers
             const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             dayNames.forEach(name => {
                  calendarGrid.innerHTML += `<div class="day-name">${name}</div>`;
             });
             
-            // Add empty cells for the start of the month
             for (let i = 0; i < firstDay; i++) {
                 calendarGrid.innerHTML += '<div class="calendar-day empty"></div>';
             }
 
-            // Add day cells
             for (let i = 1; i <= daysInMonth; i++) {
                 const day = i.toString().padStart(2, '0');
                 const monthStr = (month + 1).toString().padStart(2, '0');
@@ -502,7 +492,6 @@
             }
         }
         
-        /** Changes the calendar month. */
         function changeMonth(delta) {
             currentMonth += delta;
             if (currentMonth > 11) {
@@ -515,13 +504,11 @@
             renderCalendar(currentMonth, currentYear);
         }
         
-        /** Renders the list of currently loaded agents. */
         function renderAgentList() {
             const ul = document.getElementById('agent-list');
             if (!ul) return;
             ul.innerHTML = '';
             
-            // Convert object to array, and sort by username
             const agentEntries = Object.entries(liveAgents)
                 .sort(([, a], [, b]) => a.username.localeCompare(b.username));
 
@@ -533,11 +520,10 @@
             agentEntries.forEach(([id, agent]) => {
                 const role = agent.isAdmin ? 'Admin' : 'Agent';
                 const isCurrent = id === userId;
-                const isDefaultAdmin = id === ADMIN_ID; // Check for the fixed admin ID
+                const isDefaultAdmin = id === ADMIN_ID;
 
                 const li = document.createElement('li');
                 
-                // Content span
                 const contentSpan = document.createElement('span');
                 contentSpan.textContent = `${agent.username} (${role}) | Local ID: ${id.substring(0, 8)}`;
                 contentSpan.style.color = agent.isAdmin ? 'var(--pink-dark)' : 'var(--accent)';
@@ -546,15 +532,12 @@
                 }
                 li.appendChild(contentSpan);
 
-                // Delete button
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.className = 'delete-btn';
                 
-                // Disable deletion for the currently logged-in user AND the default admin
                 if (isCurrent || isDefaultAdmin) {
                     deleteBtn.disabled = true;
-                    // Provide a title for disabled buttons for context
                     deleteBtn.title = isCurrent ? "Cannot delete the logged-in agent." : "Cannot delete the default 'admin' agent.";
                 } else {
                     deleteBtn.onclick = () => deleteAgent(id);
@@ -565,10 +548,43 @@
             });
         }
 
+        // --- CHATROOM RENDERING ---
+        function renderChat() {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+
+            if (chatMessages.length === 0) {
+                container.innerHTML = '<em style="color:rgba(0,0,0,0.5);">No messages yet. Start the conversation!</em>';
+                return;
+            }
+
+            container.innerHTML = chatMessages.map(msg => {
+                const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const isOwn = msg.agentId === userId;
+                const align = isOwn ? 'flex-end' : 'flex-start';
+                const bg = isOwn ? 'var(--mint-dark)' : 'rgba(0,0,0,0.08)';
+                const color = isOwn ? 'white' : 'inherit';
+
+                return `
+                    <div style="margin:8px 0; display:flex; flex-direction:column; align-items:${align};">
+                        <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:12px; max-width:80%; word-wrap:break-word;">
+                            <strong>${msg.username}:</strong> ${msg.text}
+                        </div>
+                        <small style="margin-top:2px; opacity:0.6; font-size:0.75rem;">${time}</small>
+                    </div>
+                `;
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showChatroom() {
+            document.getElementById('agent-chatroom').style.display = 'block';
+            renderChat();
+        }
 
         // --- UI & Event Handlers ---
         
-        /** Toggles between the homepage and the Agent Portal view. */
         function togglePortalView(isLoggingIn) {
             const targetEl = document.getElementById('agent-portal');
             const homeEl = document.getElementById('homepage-content');
@@ -580,37 +596,31 @@
                 document.getElementById('login-prompt').style.display = 'none';
                 document.getElementById('portal-content').style.display = 'block';
                 document.getElementById('agent-status').textContent = isUserAdmin ? 'Local Admin' : 'Junior Agent';
-                document.getElementById('current-agent-id').textContent = userId; // Show full ID for context
+                document.getElementById('current-agent-id').textContent = userId;
                 
-                // Show/Hide Admin sections
                 document.getElementById('admin-sections').style.display = isUserAdmin ? 'grid' : 'none';
                 
-                renderAgentList(); // Render agent list 
-                renderCalendar(currentMonth, currentYear); // Render calendar
+                renderAgentList();
+                renderCalendar(currentMonth, currentYear);
+                showChatroom();                       // ← Show chat when logged in
             } else {
-                // If "logging out" (simulated), show the homepage
                 targetEl.classList.remove('active');
                 homeEl.style.display = 'block';
                 document.getElementById('login-prompt').style.display = 'block';
                 document.getElementById('portal-content').style.display = 'none';
+                document.getElementById('agent-chatroom').style.display = 'none';   // ← Hide chat on logout
                 
-                // Reset form fields
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
                 document.getElementById('login-status').textContent = 'Connection established. Enter credentials.';
                 document.getElementById('login-status').style.color = 'gray';
-
             }
         }
         
-        /** Handles all page-wide event listeners after the DOM loads. */
         window.onload = function() {
-            // 1. Load Data from LocalStorage
             loadData();
-            
-            // 2. Setup UI Interaction
-            
-            // --- Simulated Login Form Handler ---
+
+            // Simulated Login Form Handler
             const loginForm = document.getElementById('simulated-login-form');
             if (loginForm) {
                 loginForm.addEventListener('submit', function(e) {
@@ -619,13 +629,11 @@
                     const password = document.getElementById('login-password').value;
                     const status = document.getElementById('login-status');
 
-                    // Simulated Credential Check against ALL LocalStorage Agents
                     let loggedInAgent = null;
                     let loggedInId = null;
 
                     for (const id in liveAgents) {
                         const agent = liveAgents[id];
-                        // Check if the entered username matches AND the entered password matches the stored password
                         if (agent.username === username && agent.password === password) {
                             loggedInAgent = agent;
                             loggedInId = id;
@@ -634,48 +642,37 @@
                     }
 
                     if (loggedInAgent) {
-                        // Set global state based on the successful login
                         userId = loggedInId;
                         isUserAdmin = loggedInAgent.isAdmin;
                         
-                        // Proceed to portal view
                         togglePortalView(true);
                         showMessage(`Login successful. Welcome, ${loggedInAgent.username}!`, false);
                     } else {
-                        // Handle failed login
-                        status.textContent = '❌ Invalid Credentials. Try again.';
+                        status.textContent = 'Invalid Credentials. Try again.';
                         status.style.color = '#ff4d4d';
                         showMessage("Login failed. Check username/password.", true);
                     }
                 });
             }
 
-            // Attach toggle handlers to the navigation buttons 
             document.querySelectorAll('[data-action="toggle-portal"]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    // Show the portal section (which contains the login form)
                     document.getElementById('agent-portal').style.display = 'block'; 
-                    // Scroll to the login section
                     document.getElementById('agent-portal').scrollIntoView({ behavior: 'smooth' });
                 });
             });
 
-            // Calendar Navigation
             document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
             document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
             
-            // Agent Logout (Simulated)
             document.getElementById('logout-button').addEventListener('click', () => {
-                // IMPORTANT: When logging out, we reset the local user ID to a new, non-logged-in one.
                 userId = 'local-id-' + Math.random().toString(36).substring(2, 10);
                 isUserAdmin = false;
                 
                 showMessage("Simulated sign-out. Data is stored in your browser's LocalStorage.", false);
                 togglePortalView(false);
             });
-            
-            // --- Admin Panel Form Handlers (LocalStorage) ---
             
             // Agent Creator Form
             const agentCreatorForm = document.getElementById('agent-creator-form');
@@ -686,7 +683,7 @@
                     const password = e.target.newPassword.value;
                     const role = e.target.newRole.value;
                     if (createAgent(username, password, role)) {
-                        e.target.reset(); // Clear form on success
+                        e.target.reset();
                     }
                 });
             }
@@ -699,16 +696,35 @@
                     const title = e.target.eventTitle.value;
                     const date = e.target.eventDate.value;
                     if (scheduleEvent(title, date)) {
-                        e.target.reset(); // Clear form on success
+                        e.target.reset();
                     }
                 });
             }
-            
-            // Since we start logged out, we don't render content immediately.
-            // We ensure the login prompt is visible on load.
+
+            // CHAT FORM HANDLER
+            document.getElementById('chat-form')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const input = document.getElementById('chat-input');
+                const text = input.value.trim();
+                if (!text) return;
+
+                const username = liveAgents[userId]?.username || 'Unknown Agent';
+
+                chatMessages.push({
+                    agentId: userId,
+                    username: username,
+                    text: text,
+                    timestamp: new Date().toISOString()
+                });
+
+                saveChat();
+                renderChat();
+                input.value = '';
+            });
+
             togglePortalView(false); 
 
-            // Formspree (Original Logic Kept for Homepage Contact Form)
+            // Formspree (Homepage Contact Form)
             const form = document.getElementById("vcias-form");
             const thankyou = document.getElementById("thankyou");
             form.addEventListener("submit", async function(e) {
@@ -725,25 +741,19 @@
                         thankyou.style.display = "block";
                         setTimeout(() => { thankyou.style.display = "none"; }, 6000);
                     } else {
-                        let msg = "❌ Something went wrong. Please try again.";
+                        let msg = "Something went wrong. Please try again.";
                         try {
                             const json = await response.json();
-                            const jsonText = await response.text();
-                            console.error("Formspree response:", jsonText);
                             if (json && json.error) msg += "\n" + json.error;
-                        } catch (err) { /* ignore JSON parse errors */ }
+                        } catch (err) { /* ignore */ }
                         showMessage(msg, true);
-                        console.error("Formspree error:", response.status, response.statusText);
                     }
                 } catch (err) {
-                    showMessage("❌ Network error — check your connection.", true);
-                    console.error(err);
+                    showMessage("Network error — check your connection.", true);
                 }
             });
-
         };
 
-        // Make functions available globally for HTML elements (Calendar navigation buttons)
         window.changeMonth = changeMonth;
         window.deleteAgent = deleteAgent;
 
@@ -754,7 +764,6 @@
     <header>
         <a href="/" class="brand" aria-label="VCIAS home">
             <div class="logo" role="img" aria-hidden="false" title="VCIAS logo">
-                <!-- small veggie + spy-lens SVG -->
                 <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <defs>
                         <linearGradient id="g1" x1="0" x2="1">
@@ -779,7 +788,7 @@
         <nav aria-label="Main navigation">
             <a href="#about">About</a>
             <a href="#projects">Projects</a>
-            <a href="#" data-action="toggle-portal">Agent Portal</a> <!-- Nav Link -->
+            <a href="#" data-action="toggle-portal">Agent Portal</a>
             <a href="#join" class="btn-primary">Join VCIAS</a>
         </nav>
     </header>
@@ -811,7 +820,7 @@
                     <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
                         <a class="btn mint" href="#projects">Explore Projects</a>
                         <a class="btn pink" href="#join">Become an Agent</a>
-                        <span style="align-self:center; margin-left:auto;" class="veg-badge" aria-hidden="true">🥦 VCIAS</span>
+                        <span style="align-self:center; margin-left:auto;" class="veg-badge" aria-hidden="true">VCIA</span>
                     </div>
                 </div>
 
@@ -824,8 +833,11 @@
                         <a class="btn mint" href="#join">RSVP</a>
                         <a class="btn" style="background:transparent; border:1px solid rgba(0,0,0,0.06);" data-action="toggle-portal">Calendar</a>
                     </div>
+
                 </aside>
             </section>
+
+            <!-- ... (rest of homepage content unchanged) ... -->
 
             <section id="about" style="max-width:1100px;margin:0 auto;padding:0 24px 28px;">
                 <h2 style="margin:0 0 12px 0;">About VCIAS</h2>
@@ -854,7 +866,6 @@
                     <h2 style="margin-top:0;">Join VCIAS</h2>
                     <p style="margin:6px 0 12px 0; color:rgba(0,0,0,0.65);">We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
 
-                    <!-- Formspree Form (Kept) -->
                     <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST"
                         style="display:grid; gap:8px; grid-template-columns: 1fr 1fr; align-items:center;">
                         <input type="text" name="name" placeholder="Your name" aria-label="Your name" required>
@@ -865,19 +876,18 @@
                     </form>
 
                     <div id="thankyou" style="display:none;margin-top:10px;padding:10px;background:white;border:1px solid var(--mint);border-radius:8px;color:#0b3b2e;font-weight:600;">
-                        ✅ Thank you! Your application has been sent.
+                        Thank you! Your application has been sent.
                     </div>
                 </div>
             </section>
         </div>
         
-        <!-- Agent Portal View (Hidden by default) -->
+        <!-- Agent Portal View -->
         <section id="agent-portal" class="portal-section"> 
             <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
             
-            <!-- Login Prompt (Simulated login in this local version) -->
             <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px; text-align:center; display:block;">
-                <h3 style="margin-top:0;">Local Agent Access 🔑</h3>
+                <h3 style="margin-top:0;">Local Agent Access</h3>
                 <p style="color:rgba(0,0,0,0.65); font-size:0.95rem;">
                    
                 <form id="simulated-login-form">
@@ -890,20 +900,16 @@
                 </p>
             </div>
             
-            <!-- Portal Content (Hidden until login) -->
             <div id="portal-content" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <p style="margin:0; font-weight:600;">Status: <span id="agent-status" style="color:var(--pink-dark);">Local Admin</span> | Local ID: <span id="current-agent-id"></span></p>
                     <button class="logout-btn" id="logout-button">Simulate Log Out</button>
                 </div>
 
-                <!-- Admin Sections (Visible only if isAdmin = true) -->
                 <div id="admin-sections" class="admin-grid">
-                    
-                    <!-- Agent Creator -->
                     <div id="admin-agent-creator" class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Agent Creator (LocalStorage) 🪪</h3>
-                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ Data will persist in your browser.</p>
+                        <h3 style="margin-top:0; color:var(--accent);">Agent Creator (LocalStorage)</h3>
+                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">Data will persist in your browser.</p>
                         <form id="agent-creator-form" style="display:grid; gap:12px; grid-template-columns: 1fr 1fr;">
                             <input type="text" name="newUsername" placeholder="New Agent Username" required>
                             <input type="password" name="newPassword" placeholder="Temporary Password" required>
@@ -917,39 +923,54 @@
                         
                         <div id="created-agents-list" style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
                             <p style="font-weight:600; margin-bottom:5px;">Currently Active Agents (Click Delete to remove):</p>
-                            <ul id="agent-list" style="list-style:none; padding:0; font-size:0.9rem;">
-                                <!-- Agent list rendered here by JS -->
-                            </ul>
+                            <ul id="agent-list" style="list-style:none; padding:0; font-size:0.9rem;"></ul>
                         </div>
                     </div>
 
-                    <!-- Event Scheduler -->
                     <div id="admin-event-scheduler" class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (LocalStorage) 🗓️</h3>
-                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">✅ Data will persist in your browser.</p>
+                        <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (LocalStorage)</h3>
+                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">Data will persist in your browser.</p>
                         <form id="event-scheduler-form" style="display:grid; gap:12px;">
                             <input type="text" name="eventTitle" placeholder="Event Title" required>
                             <input type="date" name="eventDate" required>
                             <button type="submit" class="btn pink">Schedule Event & Save</button>
                         </form>
                     </div>
-
                 </div>
                 
-                <!-- Calendar Display -->
                 <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
-                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Local Data) 📅</h3>
+                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Local Data)</h3>
                     <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">Local events stored in your browser are displayed below.</p>
                     <div class="calendar-header">
-                        <button class="btn mint" id="prev-month"> &lt; Prev</button>
+                        <button class="btn mint" id="prev-month">Prev</button>
                         <h3 id="month-year-display" style="margin:0;">Loading...</h3>
-                        <button class="btn mint" id="next-month">Next &gt;</button>
+                        <button class="btn mint" id="next-month">Next</button>
                     </div>
                     
                     <div class="calendar-grid">
                         <div id="calendar-grid"></div>
                     </div>
                 </div>
+
+                <!-- NEW: AGENT-ONLY PERSISTENT CHATROOM -->
+                <section id="agent-chatroom" style="display:none; margin-top:40px;">
+                    <div class="admin-card">
+                        <h3 style="margin-top:0; color:var(--accent);">Agent Chatroom (Private & Persistent)</h3>
+                        <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">
+                            Only logged-in agents can see and send messages. Everything is saved in your browser.
+                        </p>
+
+                        <div id="chat-messages" style="height:380px; overflow-y:auto; padding:12px; background:var(--card); border-radius:10px; margin:16px 0; border:1px solid rgba(0,0,0,0.06);">
+                            <!-- messages load here -->
+                        </div>
+
+                        <form id="chat-form" style="display:grid; grid-template-columns:1fr auto; gap:8px;">
+                            <input type="text" id="chat-input" placeholder="Type a message…" autocomplete="off" required style="padding:10px;">
+                            <button type="submit" class="btn mint">Send</button>
+                        </form>
+                    </div>
+                </section>
+
             </div>
         </section>
 
@@ -966,7 +987,6 @@
     </footer>
 </div>
 
-<!-- Custom Message Box for alerts -->
 <div id="message-box" class="message-box"></div>
 
 </body>
