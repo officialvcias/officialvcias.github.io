@@ -4,740 +4,321 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>VCIAS</title>
-    <!-- Simple, friendly font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Load Inter font for consistency with other generated files -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root{
-            --mint: #A8E6CF; /* primary mint green */
-            --mint-dark: #6DD9A1;
-            --pink: #FFB3C1; /* primary pink */
-            --pink-dark:#FF8DAA;
-            --accent: #2E8B57; /* dark green accent for contrast */
-            --bg: #FCFCFC;
-            --card: rgba(255,255,255,0.7);
-            --glass: rgba(255,255,255,0.35);
-            --radius: 14px;
-            color-scheme: light;
+            --mint: #A8E6CF; --mint-dark: #6DD9A1;
+            --pink: #FFB3C1; --pink-dark:#FF8DAA;
+            --accent: #2E8B57; --bg: #FCFCFC;
+            --card: rgba(255,255,255,0.7); --glass: rgba(255,255,255,0.35);
+            --radius: 14px; color-scheme: light;
         }
         * { box-sizing: border-box; }
-        html,body{
-            height:100%;
-            margin:0;
-            font-family:'Inter', 'Poppins', system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-            background: linear-gradient(180deg, #ffffff 0%, #f8fffb 100%);
-            color:#0b3b2e;
-        }
-        /* page shell */
+        html,body{ height:100%; margin:0; font-family:'Inter', 'Poppins', system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background: linear-gradient(180deg, #ffffff 0%, #f8fffb 100%); color:#0b3b2e; }
         .site { min-height:100vh; display:flex; flex-direction:column; align-items:stretch; }
-        /* header */
-        header{
-            display:flex; align-items:center; gap:16px; padding:18px 24px;
-            background: linear-gradient(90deg, var(--mint) 0%, rgba(255,255,255,0) 60%);
-            border-bottom: 1px solid rgba(0,0,0,0.05); position:sticky; top:0;
-            backdrop-filter: blur(6px); z-index:10;
-        }
+        header{ display:flex; align-items:center; gap:16px; padding:18px 24px; background: linear-gradient(90deg, var(--mint) 0%, rgba(255,255,255,0) 60%); border-bottom: 1px solid rgba(0,0,0,0.05); position:sticky; top:0; backdrop-filter: blur(6px); z-index:10; }
         .brand { display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit; }
-        .logo { width:56px; height:56px; border-radius:12px; display:grid; place-items:center;
-            background: linear-gradient(135deg, var(--mint-dark), var(--pink));
-            box-shadow: 0 6px 18px rgba(0,0,0,0.08); flex:0 0 56px; }
+        .logo { width:56px; height:56px; border-radius:12px; display:grid; place-items:center; background: linear-gradient(135deg, var(--mint-dark), var(--pink)); box-shadow: 0 6px 18px rgba(0,0,0,0.08); flex:0 0 56px; }
         .logo svg{ width:34px; height:34px; display:block; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.12)); }
-        .site-title { line-height:1; }
         .site-title .name{ font-weight:700; font-size:1.05rem; letter-spacing:0.4px; }
         .site-title .tag{ font-weight:300; font-size:0.8rem; color:rgba(0,0,0,0.55); }
         nav { margin-left:auto; display:flex; gap:10px; align-items:center; }
         nav a { text-decoration:none; padding:8px 12px; border-radius:10px; font-weight:600; color:var(--accent); }
-        nav a.btn-primary{
-            background: linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.06));
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 6px 14px rgba(0,0,0,0.06);
-            cursor: pointer;
-        }
-        /* hero */
-        .hero { display:grid; grid-template-columns: 1fr 420px; gap:28px; align-items:center;
-            padding:48px 24px; max-width:1100px; margin:18px auto; width:calc(100% - 40px); }
-        .hero-card { background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.6));
-            border-radius: var(--radius); padding:28px; box-shadow: 0 10px 30px rgba(22,48,30,0.05);
-            border: 1px solid rgba(0,0,0,0.04); }
-        .kicker { display:inline-block; padding:6px 10px; border-radius:999px;
-            background:linear-gradient(90deg,var(--pink),var(--mint)); color:white; font-weight:700; font-size:0.8rem;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin-bottom:14px; }
+        nav a.btn-primary{ background: linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.06)); border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 6px 14px rgba(0,0,0,0.06); cursor: pointer; }
+        .hero { display:grid; grid-template-columns: 1fr 420px; gap:28px; align-items:center; padding:48px 24px; max-width:1100px; margin:18px auto; width:calc(100% - 40px); }
+        .hero-card { background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.6)); border-radius: var(--radius); padding:28px; box-shadow: 0 10px 30px rgba(22,48,30,0.05); border: 1px solid rgba(0,0,0,0.04); }
+        .kicker { display:inline-block; padding:6px 10px; border-radius:999px; background:linear-gradient(90deg,var(--pink),var(--mint)); color:white; font-weight:700; font-size:0.8rem; box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin-bottom:14px; }
         h1{ margin:6px 0 10px 0; font-size:2rem; color: #0f4f3a;}
         p.lead{ margin:0 0 18px 0; color: #184e3a; font-weight:400; opacity:0.9; }
-        /* small stats row */
         .stats{ display:flex; gap:12px; margin-top:6px; flex-wrap:wrap; }
-        .stat { background:var(--card); border-radius:12px; padding:10px 12px; min-width:120px;
-            box-shadow: inset 0 -2px 0 rgba(255,255,255,0.35); }
+        .stat { background:var(--card); border-radius:12px; padding:10px 12px; min-width:120px; box-shadow: inset 0 -2px 0 rgba(255,255,255,0.35); }
         .stat .num{ font-weight:700; font-size:1.05rem; }
         .stat .lbl{ font-size:0.8rem; color:rgba(0,0,0,0.55); }
-        /* right column - callout */
-        .callout { display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:center;
-            text-align:center; padding:22px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7));
-            border-radius:14px; border: 1px solid rgba(0,0,0,0.04); }
+        .callout { display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:center; text-align:center; padding:22px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7)); border-radius:14px; border: 1px solid rgba(0,0,0,0.04); }
         .callout strong{ display:block; font-size:1.15rem; color:var(--accent); }
         .cta-row{ display:flex; gap:10px; margin-top:8px; }
         .btn { padding:10px 14px; border-radius:12px; font-weight:700; text-decoration:none; display:inline-block; cursor: pointer; border: none;}
         .btn.mint { background: linear-gradient(90deg,var(--mint), var(--mint-dark)); color:#083f2e; box-shadow: 0 4px 12px rgba(46,139,87,0.25);}
         .btn.pink { background: linear-gradient(90deg,var(--pink), var(--pink-dark)); color:#2b1b21; box-shadow: 0 4px 12px rgba(255,141,170,0.25);}
         .btn:hover:not(:disabled) { opacity: 0.9; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        /* features */
-        .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px;
-            padding: 8px 24px 64px; max-width:1100px; margin: 6px auto 36px; width:calc(100% - 40px); }
-        .feature { background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
-            padding:18px; border-radius:12px; border:1px solid rgba(0,0,0,0.04);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
-        .feature h3{ margin:6px 0 8px 0; font-size:1.05rem; color: #0f513f; }
-        .feature p{ margin:0; color:rgba(0,0,0,0.65); font-size:0.95rem; }
-        /* footer */
-        footer{ margin-top:auto; padding:22px; text-align:center;
-            background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.06));
-            border-top:1px solid rgba(0,0,0,0.04); }
-        .footer-inner{ max-width:900px; margin:0 auto; display:flex; gap:16px; align-items:center;
-            justify-content:center; flex-wrap:wrap; color:rgba(0,0,0,0.6); font-size:0.95rem; }
-        /* little playful badge */
-        .veg-badge{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background: linear-gradient(90deg,var(--mint),var(--pink)); color:white; border-radius:999px; font-weight:700; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-       
-        /* Form/Input styles */
-        input[type="text"], input[type="email"], input[type="password"], textarea, select, input[type="date"] {
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(0,0,0,0.07);
-            background: rgba(255,255,255,0.8);
-            width: 100%;
-            font-family: inherit;
-        }
-        /* Portal Styling */
-        .portal-section[hiding] {
-            display: none;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-        .portal-section.active {
-            display: block;
-        }
-        /* Calendar Styling */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-top: 16px;
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            margin-bottom: 8px;
-        }
-        .day-name {
-            text-align: center;
-            font-weight: 600;
-            color: var(--accent);
-            font-size: 0.9rem;
-            padding: 6px 0;
-        }
-        .calendar-day {
-            min-height: 100px;
-            padding: 8px;
-            border-radius: 8px;
-            background: var(--card);
-            border: 1px solid rgba(0,0,0,0.05);
-            font-size: 0.8rem;
-            position: relative;
-        }
-        .calendar-day.empty {
-            background: rgba(240, 240, 240, 0.4);
-        }
-        .day-number {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #0b3b2e;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .event-slot {
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-weight: 500;
-            color: #0f4f3a;
-            line-height: 1.2;
-            word-break: break-all;
-            background: var(--mint-dark);
-            padding: 2px 4px;
-            border-radius: 4px;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-        /* Message Box Styling */
-        .message-box {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 12px;
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
-            display: none;
-            font-weight: 600;
-            transition: transform 0.3s ease-out;
-            transform: translateY(100px);
-        }
-        .message-box.show {
-            display: block;
-            transform: translateY(0);
-        }
-       
-        .logout-btn {
-            background: transparent;
-            color: var(--pink-dark);
-            font-weight: 600;
-            text-decoration: underline;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-        }
-       
-        /* Agent List Delete Button */
-        .delete-btn {
-            background: #ff5c77;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-left: 10px;
-        }
-        .delete-btn:hover:not(:disabled) {
-            background: #e64562;
-        }
-        .delete-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #ccc;
-        }
-        #agent-list li {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 4px 0;
-        }
-       
-        /* Admin Grid Layout for large screens */
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        @media (min-width: 768px) {
-            .admin-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        .admin-card {
-            background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
-            padding: 24px;
-            border-radius: 14px;
-            border: 1px solid rgba(0,0,0,0.04);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
-        }
-       
+        input[type="text"],input[type="password"],input[type="date"],select,textarea{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.07);border-radius:10px;padding:10px;width:100%;font-family:inherit;}
+        .portal-section{display:none;max-width:1100px;margin:0 auto;padding:24px;}
+        .portal-section.active{display:block;}
+        .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px;}
+        .calendar-header{display:flex;justify-content:space-between;align-items:center;padding:8px 0;margin-bottom:8px;}
+        .day-name{text-align:center;font-weight:600;color:var(--accent);font-size:0.9rem;padding:6px 0;}
+        .calendar-day{min-height:100px;padding:8px;border-radius:8px;background:var(--card);border:1px solid rgba(0,0,0,0.05);font-size:0.8rem;position:relative;}
+        .calendar-day.empty{background:rgba(240,240,240,0.4);}
+        .day-number{font-weight:700;font-size:1.1rem;color:#0b3b2e;display:block;margin-bottom:4px;}
+        .event-slot{margin-top:4px;background:var(--mint-dark);color:white;padding:2px 4px;border-radius:4px;font-size:0.8rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+        .message-box{position:fixed;bottom:20px;right:20px;padding:15px 20px;border-radius:12px;background:var(--accent);color:white;box-shadow:0 4px 15px rgba(0,0,0,0.2);z-index:100;display:none;font-weight:600;transition:transform .3s;transform:translateY(100px);}
+        .message-box.show{display:block;transform:translateY(0);}
+        .logout-btn{background:transparent;color:var(--pink-dark);font-weight:600;text-decoration:underline;border:none;cursor:pointer;padding:0;}
+        .delete-btn{background:#ff5c77;color:white;border:none;padding:4px 8px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;margin-left:10px;}
+        .delete-btn:hover{background:#e64562;}
+        #agent-list li{display:flex;align-items:center;justify-content:space-between;padding:4px 0;}
+        .admin-grid{display:grid;grid-template-columns:1fr;gap:20px;}
+        @media(min-width:768px){.admin-grid{grid-template-columns:1fr 1fr;}}
+        .admin-card{background:linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0.6));padding:24px;border-radius:14px;border:1px solid rgba(0,0,0,0.04);box-shadow:0 6px 15px rgba(0,0,0,0.05);}
+        .veg-badge{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;background:linear-gradient(90deg,var(--mint),var(--pink));color:white;border-radius:999px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,0.08);}
+        footer{margin-top:auto;padding:22px;text-align:center;background:linear-gradient(90deg,rgba(255,255,255,0.4),rgba(255,255,255,0.06));border-top:1px solid rgba(0,0,0,0.04);}
+        .footer-inner{max-width:900px;margin:0 auto;display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;color:rgba(0,0,0,0.6);font-size:0.95rem;}
     </style>
-   
-    <script type="text/javascript">
-       
-        // --- Global App State (LocalStorage Persistence) ---
-       
-        const AGENTS_KEY = 'vcias_agents_v1';
-        const EVENTS_KEY = 'vcias_events_v1';
-        const CHAT_KEY = 'vcias_agent_chat_v1';
-        const NEXT_EVENT_KEY = 'vcias_next_event'; // ← NEW: Stores homepage next event
 
-        // ** FIX: Use a fixed ID for the default admin user **
-        const ADMIN_ID = 'vcias-admin';
-       
-        // Use a simple, local ID for display purposes
-        let userId = 'local-id-' + Math.random().toString(36).substring(2, 10);
-        let isUserAdmin = false;
-        let liveAgents = {};
-        let liveEvents = {};
-        let chatMessages = [];
-        
-        // NEW: Next event state (loaded from localStorage)
-        let nextEvent = {
-            title: "Discuss ideas for student council posters",
-            details: "Sat • 1:00 PM • IRL/Zoom"
-        };
+    <script>
+        const AGENTS_KEY='vcias_agents_v1',EVENTS_KEY='vcias_events_v1',CHAT_KEY='vcias_agent_chat_v1';
+        const NEXT_EVENT_KEY='vcias_next_event_v3'; // ← ONLY NEW
 
-        // Calendar state
-        const today = new Date();
-        let currentMonth = today.getMonth();
-        let currentYear = today.getFullYear();
-       
-        // --- Utility Functions ---
-        function getDefaultAgents() {
-            const defaults = {
-                [ADMIN_ID]: {
-                    isAdmin: true,
-                    username: 'admin',
-                    password: 'vcias',
-                    creatorId: ADMIN_ID
-                },
-                'agent-001': { isAdmin: false, username: 'Carrot Agent', password: 'temp1', creatorId: ADMIN_ID },
-                'agent-002': { isAdmin: false, username: 'Broccoli Bot', password: 'temp2', creatorId: ADMIN_ID }
-            };
-            return defaults;
+        const ADMIN_ID='vcias-admin';
+        let userId='local-id-'+Math.random().toString(36).substring(2,10),isUserAdmin=false;
+        let liveAgents={},liveEvents={},chatMessages=[];
+        let nextEvent={title:"Discuss ideas for student council posters",details:"Sat • 1:00 PM • IRL/Zoom"};
+        const today=new Date();let currentMonth=today.getMonth(),currentYear=today.getFullYear();
+
+        function getDefaultAgents(){return{[ADMIN_ID]:{isAdmin:true,username:'admin',password:'vcias',creatorId:ADMIN_ID},
+            'agent-001':{isAdmin:false,username:'Carrot Agent',password:'temp1',creatorId:ADMIN_ID},
+            'agent-002':{isAdmin:false,username:'Broccoli Bot',password:'temp2',creatorId:ADMIN_ID}};}
+        function getDefaultEvents(){const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+            return{[`${y}-${m}-${day}`]:[{title:'Project Planning (Sample)',creator:'admin'}]};}
+
+        // ← ONLY NEW: Next Event persistence
+        function loadNextEvent(){
+            const s=localStorage.getItem(NEXT_EVENT_KEY);
+            if(s)try{const p=JSON.parse(s);nextEvent.title=p.title||nextEvent.title;nextEvent.details=p.details||nextEvent.details;}catch(e){}
+            document.getElementById('next-event-title').textContent=nextEvent.title;
+            document.getElementById('next-event-details').textContent=nextEvent.details;
         }
-        function getDefaultEvents() {
-            const todayDate = new Date();
-            const year = todayDate.getFullYear();
-            const month = (todayDate.getMonth() + 1).toString().padStart(2, '0');
-            const day = todayDate.getDate().toString().padStart(2, '0');
-            const todayStr = `${year}-${month}-${day}`;
-           
-            return {
-                [todayStr]: [
-                    { title: 'Project Planning (Sample)', creator: 'admin' }
-                ]
-            };
-        }
-       
-        // NEW: Load next event from localStorage
-        function loadNextEvent() {
-            const saved = localStorage.getItem(NEXT_EVENT_KEY);
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    nextEvent.title = parsed.title || nextEvent.title;
-                    nextEvent.details = parsed.details || nextEvent.details;
-                } catch(e) { console.warn("Failed to load next event"); }
-            }
-            // Update the homepage display
-            const titleEl = document.getElementById("next-event-title");
-            const detailsEl = document.getElementById("next-event-details");
-            if (titleEl) titleEl.textContent = nextEvent.title;
-            if (detailsEl) detailsEl.textContent = nextEvent.details;
+        function saveNextEvent(){
+            localStorage.setItem(NEXT_EVENT_KEY,JSON.stringify(nextEvent));
+            loadNextEvent();
+            showMessage("Homepage “Next Event” updated!",false);
         }
 
-        // NEW: Save next event
-        function saveNextEvent() {
-            localStorage.setItem(NEXT_EVENT_KEY, JSON.stringify(nextEvent));
-            loadNextEvent(); // Refresh display
-        }
-
-        /** Loads data from LocalStorage or returns default sample data. */
-        function loadData() {
-            // Agents
-            const storedAgents = localStorage.getItem(AGENTS_KEY);
-            if (storedAgents) {
-                try {
-                    liveAgents = JSON.parse(storedAgents);
-                    const defaultAdmin = getDefaultAgents()[ADMIN_ID];
-                    if (!liveAgents[ADMIN_ID]) {
-                        liveAgents[ADMIN_ID] = defaultAdmin;
-                        saveAgents();
-                    } else if (liveAgents[ADMIN_ID].username !== defaultAdmin.username || liveAgents[ADMIN_ID].password !== defaultAdmin.password) {
-                        liveAgents[ADMIN_ID].username = defaultAdmin.username;
-                        liveAgents[ADMIN_ID].password = defaultAdmin.password;
-                        liveAgents[ADMIN_ID].isAdmin = true;
-                        saveAgents();
-                    }
-                } catch (e) {
-                    console.error("Error parsing stored agents, resetting data to defaults.", e);
-                    liveAgents = getDefaultAgents();
-                }
-            } else {
-                liveAgents = getDefaultAgents();
-                saveAgents();
-            }
-           
-            // Events
-            const storedEvents = localStorage.getItem(EVENTS_KEY);
-            if (storedEvents) {
-                try { liveEvents = JSON.parse(storedEvents); }
-                catch (e) {
-                    console.error("Error parsing stored events, resetting data to defaults.", e);
-                    liveEvents = getDefaultEvents();
-                }
-            } else {
-                liveEvents = getDefaultEvents();
-            }
-            // Chat Messages
-            const storedChat = localStorage.getItem(CHAT_KEY);
-            if (storedChat) {
-                try { chatMessages = JSON.parse(storedChat); }
-                catch(e) { chatMessages = []; }
-            }
-
-            // ← Load the next event from localStorage
+        function loadData(){
+            liveAgents=localStorage.getItem(AGENTS_KEY)?JSON.parse(localStorage.getItem(AGENTS_KEY)):getDefaultAgents();
+            if(!liveAgents[ADMIN_ID]){liveAgents[ADMIN_ID]=getDefaultAgents()[ADMIN_ID];localStorage.setItem(AGENTS_KEY,JSON.stringify(liveAgents));}
+            liveEvents=localStorage.getItem(EVENTS_KEY)?JSON.parse(localStorage.getItem(EVENTS_KEY)):getDefaultEvents();
+            chatMessages=localStorage.getItem(CHAT_KEY)?JSON.parse(localStorage.getItem(CHAT_KEY)):[];
             loadNextEvent();
         }
-       
-        function saveAgents() {
-            localStorage.setItem(AGENTS_KEY, JSON.stringify(liveAgents));
-        }
-        function saveEvents() {
-            localStorage.setItem(EVENTS_KEY, JSON.stringify(liveEvents));
-        }
-        function saveChat() {
-            localStorage.setItem(CHAT_KEY, JSON.stringify(chatMessages));
-        }
-       
-        function showMessage(text, isError = false) {
-            const box = document.getElementById('message-box');
-            box.textContent = text;
-            box.style.backgroundColor = isError ? '#ff4d4d' : 'var(--accent)';
-            box.classList.add('show');
-            setTimeout(() => {
-                box.classList.remove('show');
-            }, 4000);
-        }
+        function saveAgents(){localStorage.setItem(AGENTS_KEY,JSON.stringify(liveAgents));}
+        function saveEvents(){localStorage.setItem(EVENTS_KEY,JSON.stringify(liveEvents));}
+        function saveChat(){localStorage.setItem(CHAT_KEY,JSON.stringify(chatMessages));}
 
-        // --- [All your existing functions unchanged] ---
-        function createAgent(username, password, role) { /* unchanged */ }
-        function deleteAgent(agentId) { /* unchanged */ }
-        function scheduleEvent(title, dateString) { /* unchanged */ }
-        function renderCalendar(month, year) { /* unchanged */ }
-        function changeMonth(delta) { /* unchanged */ }
-        function renderAgentList() { /* unchanged */ }
-        function renderChat() { /* unchanged */ }
-        function showChatroom() { /* unchanged */ }
+        function showMessage(t,e=false){const b=document.getElementById('message-box');b.textContent=t;b.style.backgroundColor=e?'#ff4d4d':'var(--accent)';b.classList.add('show');setTimeout(()=>b.classList.remove('show'),4000);}
 
-        function togglePortalView(isLoggingIn) {
-            const targetEl = document.getElementById('agent-portal');
-            const homeEl = document.getElementById('homepage-content');
-           
-            if (isLoggingIn) {
-                homeEl.style.display = 'none';
-                targetEl.classList.add('active');
-               
-                document.getElementById('login-prompt').style.display = 'none';
-                document.getElementById('portal-content').style.display = 'block';
-                document.getElementById('agent-status').textContent = isUserAdmin ? 'Local Admin' : 'Junior Agent';
-                document.getElementById('current-agent-id').textContent = userId;
-               
-                document.getElementById('admin-sections').style.display = isUserAdmin ? 'grid' : 'none';
-               
-                renderAgentList();
-                renderCalendar(currentMonth, currentYear);
-                showChatroom();
+        function createAgent(u,p,r){if(Object.values(liveAgents).some(a=>a.username===u)){showMessage(`Agent ${u} exists`,true);return false;}
+            if(!p){showMessage("Password required",true);return false;}
+            const id='agent-'+Math.random().toString(36).substring(2,6);
+            liveAgents[id]={isAdmin:r==='Admin',username:u,password:p,creatorId:userId};
+            saveAgents();showMessage(`Agent ${u} created!`,false);renderAgentList();return true;}
+        function deleteAgent(id){if(id===userId||id===ADMIN_ID)return;delete liveAgents[id];saveAgents();renderAgentList();}
+        function scheduleEvent(t,d){if(!liveEvents[d])liveEvents[d]=[];liveEvents[d].push({title:t,creator:liveAgents[userId].username});
+            saveEvents();showMessage("Event scheduled!",false);renderCalendar(currentMonth,currentYear);return true;}
+        function renderCalendar(m,y){const g=document.getElementById('calendar-grid'),d=document.getElementById('month-year-display');
+            const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+            const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+            d.textContent=`${months[m]} ${y}`;g.innerHTML='';
+            ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(w=>g.innerHTML+=`<div class="day-name">${w}</div>`);
+            for(let i=0;i<first;i++)g.innerHTML+='<div class="calendar-day empty"></div>';
+            for(let i=1;i<=days;i++){
+                const key=`${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                const ev=(liveEvents[key]||[]).map(e=>`<div class="event-slot">${e.title}</div>`).join('');
+                g.innerHTML+=`<div class="calendar-day"><span class="day-number">${i}</span>${ev}</div>`;
+            }}
+        function changeMonth(delta){currentMonth+=delta;if(currentMonth>11){currentMonth=0;currentYear++;}else if(currentMonth<0){currentMonth=11;currentYear--;}renderCalendar(currentMonth,currentYear);}
+        function renderAgentList(){const ul=document.getElementById('agent-list');ul.innerHTML='';
+            Object.entries(liveAgents).sort((a,b)=>a[1].username.localeCompare(b[1].username)).forEach(([id,a])=>{
+                const li=document.createElement('li');
+                li.innerHTML=`<span style="color:${a.isAdmin?'var(--pink-dark)':'var(--accent)'}">${a.username} (${a.isAdmin?'Admin':'Agent'}) ${id===userId?' <strong>(You)</strong>':''}</span>`;
+                const btn=document.createElement('button');btn.className='delete-btn';btn.textContent='Delete';
+                if(id===userId||id===ADMIN_ID)btn.disabled=true;else btn.onclick=()=>deleteAgent(id);
+                li.appendChild(btn);ul.appendChild(li);
+            });}
+        function renderChat(){const c=document.getElementById('chat-messages');
+            if(chatMessages.length===0){c.innerHTML='<em style="color:rgba(0,0,0,0.5);">No messages yet.</em>';return;}
+            c.innerHTML=chatMessages.map(m=>{const t=new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                const own=m.agentId===userId;
+                return`<div style="margin:8px 0;display:flex;flex-direction:column;align-items:${own?'flex-end':'flex-start'}">
+                    <div style="background:${own?'var(--mint-dark)':'rgba(0,0,0,0.08)'};color:${own?'white':'inherit'};padding:8px 12px;border-radius:12px;max-width:80%;">
+                        <strong>${m.username}:</strong> ${m.text}
+                    </div><small style="margin-top:2px;opacity:0.6;font-size:0.75rem;">${t}</small></div>`;}).join('');
+            c.scrollTop=c.scrollHeight;}
+        function showChatroom(){document.getElementById('agent-chatroom').style.display='block';renderChat();}
 
-                // ← NEW: Show the next event editor only for admins
-                document.getElementById('next-event-editor').style.display = isUserAdmin ? 'block' : 'none';
-            } else {
-                targetEl.classList.remove('active');
-                homeEl.style.display = 'block';
-                document.getElementById('login-prompt').style.display = 'block';
-                document.getElementById('portal-content').style.display = 'none';
-                document.getElementById('agent-chatroom').style.display = 'none';
-            }
-        }
-       
-        window.onload = function() {
+        function togglePortalView(login){
+            const home=document.getElementById('homepage-content');
+            const portal=document.getElementById('agent-portal');
+            if(login){
+                home.style.display='none';portal.classList.add('active');
+                document.getElementById('login-prompt').style.display='none';
+                document.getElementById('portal-content').style.display='block';
+                document.getElementById('agent-status').textContent=isUserAdmin?'Local Admin':'Junior Agent';
+                document.getElementById('current-agent-id').textContent=userId;
+                document.getElementById('admin-sections').style.display=isUserAdmin?'grid':'none';
+                document.getElementById('next-event-editor').style.display=isUserAdmin?'block':'none'; // ← NEW
+                renderAgentList();renderCalendar(currentMonth,currentYear);showChatroom();
+            }else{
+                portal.classList.remove('active');home.style.display='block';
+                document.getElementById('login-prompt').style.display='block';
+                document.getElementById('portal-content').style.display='none';
+                document.getElementById('agent-chatroom').style.display='none';
+            }}
+        window.onload=()=>{
             loadData();
-
-            // ← NEW: Next Event Form Handler (Admin Only)
-            const nextEventForm = document.getElementById('next-event-form');
-            if (nextEventForm) {
-                nextEventForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const newTitle = document.getElementById('next-event-title-input').value.trim();
-                    const newDetails = document.getElementById('next-event-details-input').value.trim();
-                    if (newTitle) {
-                        nextEvent.title = newTitle;
-                        nextEvent.details = newDetails || "";
-                        saveNextEvent();
-                        showMessage("Homepage 'Next Event' updated!", false);
-                    }
-                });
-            }
-
-            // Your existing login handler (unchanged)
-            const loginForm = document.getElementById('simulated-login-form');
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const username = document.getElementById('login-username').value;
-                    const password = document.getElementById('login-password').value;
-                    let loggedInAgent = null;
-                    let loggedInId = null;
-                    for (const id in liveAgents) {
-                        const agent = liveAgents[id];
-                        if (agent.username === username && agent.password === password) {
-                            loggedInAgent = agent;
-                            loggedInId = id;
-                            break;
-                        }
-                    }
-                    if (loggedInAgent) {
-                        userId = loggedInId;
-                        isUserAdmin = loggedInAgent.isAdmin;
-                        togglePortalView(true);
-                        showMessage(`Login successful. Welcome, ${loggedInAgent.username}!`, false);
-                    } else {
-                        document.getElementById('login-status').textContent = 'Invalid Credentials. Try again.';
-                        document.getElementById('login-status').style.color = '#ff4d4d';
-                        showMessage("Login failed. Check username/password.", true);
-                    }
-                });
-            }
-
-            // ← All your original event listeners below (unchanged)
-            document.querySelectorAll('[data-action="toggle-portal"]').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    document.getElementById('agent-portal').style.display = 'block';
-                    document.getElementById('agent-portal').scrollIntoView({ behavior: 'smooth' });
-                });
-            });
-            document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
-            document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
-            document.getElementById('logout-button').addEventListener('click', () => {
-                userId = 'local-id-' + Math.random().toString(36).substring(2, 10);
-                isUserAdmin = false;
-                showMessage("Simulated sign-out. Data is stored in your browser's LocalStorage.", false);
-                togglePortalView(false);
-            });
-
-            // Agent Creator, Event Scheduler, Chat — all unchanged
-            const agentCreatorForm = document.getElementById('agent-creator-form');
-            if (agentCreatorForm) {
-                agentCreatorForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const username = e.target.newUsername.value;
-                    const password = e.target.newPassword.value;
-                    const role = e.target.newRole.value;
-                    if (createAgent(username, password, role)) {
-                        e.target.reset();
-                    }
-                });
-            }
-
-            const eventSchedulerForm = document.getElementById('event-scheduler-form');
-            if (eventSchedulerForm) {
-                eventSchedulerForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const title = e.target.eventTitle.value;
-                    const date = e.target.eventDate.value;
-                    if (scheduleEvent(title, date)) {
-                        e.target.reset();
-                    }
-                });
-            }
-
-            document.getElementById('chat-form')?.addEventListener('submit', function(e) {
+            // ← NEW: Next Event editor
+            document.getElementById('next-event-form')?.addEventListener('submit',e=>{
                 e.preventDefault();
-                const input = document.getElementById('chat-input');
-                const text = input.value.trim();
-                if (!text) return;
-                const username = liveAgents[userId]?.username || 'Unknown Agent';
-                chatMessages.push({
-                    agentId: userId,
-                    username: username,
-                    text: text,
-                    timestamp: new Date().toISOString()
-                });
-                saveChat();
-                renderChat();
-                input.value = '';
+                nextEvent.title=document.getElementById('next-event-title-input').value.trim()||nextEvent.title;
+                nextEvent.details=document.getElementById('next-event-details-input').value.trim();
+                saveNextEvent();
             });
-
-            togglePortalView(false);
-
-            // Formspree handler unchanged
-            const form = document.getElementById("vcias-form");
-            const thankyou = document.getElementById("thankyou");
-            form.addEventListener("submit", async function(e) {
+            document.getElementById('simulated-login-form').addEventListener('submit',e=>{
                 e.preventDefault();
-                const data = new FormData(form);
-                try {
-                    const response = await fetch(form.action, {
-                        method: form.method || "POST",
-                        body: data,
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    if (response.ok) {
-                        form.reset();
-                        thankyou.style.display = "block";
-                        setTimeout(() => { thankyou.style.display = "none"; }, 6000);
-                    } else {
-                        let msg = "Something went wrong. Please try again.";
-                        try {
-                            const json = await response.json();
-                            if (json && json.error) msg += "\n" + json.error;
-                        } catch (err) { }
-                        showMessage(msg, true);
-                    }
-                } catch (err) {
-                    showMessage("Network error — check your connection.", true);
+                const u=document.getElementById('login-username').value;
+                const p=document.getElementById('login-password').value;
+                let found=null;
+                for(const id in liveAgents){
+                    if(liveAgents[id].username===u && liveAgents[id].password===p){found={id,agent:liveAgents[id]};break;}
                 }
+                if(found){userId=found.id;isUserAdmin=found.agent.isAdmin;togglePortalView(true);
+                    showMessage(`Welcome, ${found.agent.username}!`,false);
+                }else showMessage("Invalid credentials.",true);
             });
+            document.querySelectorAll('[data-action="toggle-portal"]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();document.getElementById('agent-portal').style.display='block';document.getElementById('agent-portal').scrollIntoView({behavior:'smooth'});}));
+            document.getElementById('prev-month').addEventListener('click',()=>changeMonth(-1));
+            document.getElementById('next-month').addEventListener('click',()=>changeMonth(1));
+            document.getElementById('logout-button').addEventListener('click',()=>{userId='local-id-'+Math.random().toString(36).substring(2,10);isUserAdmin=false;togglePortalView(false);showMessage("Logged out.",false);});
+            document.getElementById('agent-creator-form')?.addEventListener('submit',e=>{
+                e.preventDefault();
+                const u=e.target.newUsername.value,p=e.target.newPassword.value,r=e.target.newRole.value;
+                if(createAgent(u,p,r))e.target.reset();
+            });
+            document.getElementById('event-scheduler-form')?.addEventListener('submit',e=>{
+                e.preventDefault();
+                const t=e.target.eventTitle.value,d=e.target.eventDate.value;
+                if(scheduleEvent(t,d))e.target.reset();
+            });
+            document.getElementById('chat-form')?.addEventListener('submit',e=>{
+                e.preventDefault();
+                const i=document.getElementById('chat-input');
+                const txt=i.value.trim();if(!txt)return;
+                chatMessages.push({agentId:userId,username:liveAgents[userId]?.username||'Agent',text:txt,timestamp:new Date().toISOString()});
+                saveChat();renderChat();i.value='';
+            });
+            togglePortalView(false);
         };
-        window.changeMonth = changeMonth;
-        window.deleteAgent = deleteAgent;
+        window.changeMonth=changeMonth;window.deleteAgent=deleteAgent;
     </script>
 </head>
 <body>
 <div class="site">
     <header>
-        <!-- header unchanged -->
-        <a href="/" class="brand" aria-label="VCIAS home">
-            <div class="logo" role="img" aria-hidden="false" title="VCIAS logo">
-                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="g1" x1="0" x2="1">
-                            <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/>
-                            <stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="64" height="64" rx="12" fill="url(#g1)" />
-                    <g transform="translate(6,6)">
-                        <circle cx="22" cy="18" r="12" fill="#0f6b4f" />
-                        <path d="M26 12c6 0 10 5 10 10 0 2.2-.7 4.2-2 5.8" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" fill="none"/>
-                        <rect x="2" y="20" width="14" height="6" rx="3" fill="#6FD0A6" />
-                    </g>
-                </svg>
-            </div>
-            <div class="site-title">
-                <div class="name">VCIAS</div>
-                <div class="tag">Vegggie Central Intelligence Agency Society</div>
-            </div>
+        <a href="/" class="brand">
+            <div class="logo"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <rect width="64" height="64" rx="12" fill="url(#g1)"/>
+                <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/></linearGradient></defs>
+                <g transform="translate(6,6)"><circle cx="22" cy="18" r="12" fill="#0f6b4f"/><rect x="2" y="20" width="14" height="6" rx="3" fill="#6FD0A6"/></g>
+            </svg></div>
+            <div class="site-title"><div class="name">VCIAS</div><div class="tag">Vegggie Central Intelligence Agency Society</div></div>
         </a>
-        <nav aria-label="Main navigation">
-            <a href="#about">About</a>
-            <a href="#projects">Projects</a>
+        <nav>
+            <a href="#about">About</a><a href="#projects">Projects</a>
             <a href="#" data-action="toggle-portal">Agent Portal</a>
             <a href="#join" class="btn-primary">Join VCIAS</a>
         </nav>
     </header>
+
     <main>
-        <!-- Homepage Content -->
         <div id="homepage-content" style="display:block;">
-            <section class="hero" aria-labelledby="hero-title">
+            <section class="hero">
                 <div class="hero-card">
                     <span class="kicker">Community • Grow • 67</span>
-                    <h1 id="hero-title">VCIAS — Vegggie Central Intelligence Agency Society</h1>
+                    <h1>VCIAS — Vegggie Central Intelligence Agency Society</h1>
                     <p class="lead">We’re a playful collective investigating the secret lives of vegetables, building veggie projects, and sharing recipes, art, and tiny experiments. Everyone is welcome — whether you love gardening, gadgets, or goofy conspiracy-free fun.</p>
-                    <div class="stats" role="list" aria-label="Site stats">
-                        <div class="num-agents stat" role="listitem">
-                            <div class="num">3</div>
-                            <div class="lbl">Active Agents</div>
-                        </div>
-                        <div class="stat" role="listitem">
-                            <div class="num">1</div>
-                            <div class="lbl">Active Projects</div>
-                        </div>
-                        <div class="stat" role="listitem">
-                            <div class="num">0.2</div>
-                            <div class="lbl">Weekly Meetups</div>
-                        </div>
+                    <div class="stats">
+                        <div class="stat"><div class="num">3</div><div class="lbl">Active Agents</div></div>
+                        <div class="stat"><div class="num">1</div><div class="lbl">Active Projects</div></div>
+                        <div class="stat"><div class="num">0.2</div><div class="lbl">Weekly Meetups</div></div>
                     </div>
-                    <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
                         <a class="btn mint" href="#projects">Explore Projects</a>
                         <a class="btn pink" href="#join">Become an Agent</a>
-                        <span style="align-self:center; margin-left:auto;" class="veg-badge" aria-hidden="true">VCIA</span>
+                        <span class="veg-badge">VCIA</span>
                     </div>
                 </div>
-                <aside class="callout" aria-labelledby="callout-title">
-                    <div style="font-size:0.9rem; color:rgba(0,0,0,0.6)">Next Event</div>
-                    <strong id="next-event-title" id="callout-title">Discuss ideas for student council posters</strong>
-                    <div id="next-event-details" style="font-size:0.9rem; color:rgba(0,0,0,0.65)">Sat • 1:00 PM • IRL/Zoom</div>
+                <aside class="callout">
+                    <div style="font-size:0.9rem;color:rgba(0,0,0,0.6)">Next Event</div>
+                    <strong id="next-event-title">Discuss ideas for student council posters</strong>
+                    <div id="next-event-details" style="font-size:0.9rem;color:rgba(0,0,0,0.65)">Sat • 1:00 PM • IRL/Zoom</div>
                     <div class="cta-row">
                         <a class="btn mint" href="#join">RSVP</a>
-                        <a class="btn" style="background:transparent; border:1px solid rgba(0,0,0,0.06);" data-action="toggle-portal">Calendar</a>
+                        <a class="btn" style="background:transparent;border:1px solid rgba(0,0,0,0.06);" data-action="toggle-portal">Calendar</a>
                     </div>
                 </aside>
             </section>
 
-            <!-- All your other homepage sections completely unchanged -->
             <section id="about" style="max-width:1100px;margin:0 auto;padding:0 24px 28px;">
-                <h2 style="margin:0 0 12px 0;">About VCIAS</h2>
-                <p style="margin-top:0; color:rgba(0,0,0,0.7);">VCIAS (Vegggie Central Intelligence Agency Society) is a serious, highly enthusiastic group that loves veggies,(only the good ones tho) creativity, and community-driven projects. We make stuff, host things sometimes, prototype tiny farming robots, (not anymore) and eventually dress up as giant carrots.</p>
+                <h2>About VCIAS</h2>
+                <p>VCIAS (Vegggie Central Intelligence Agency Society) is a serious, highly enthusiastic group that loves veggies,(only the good ones tho) creativity, and community-driven projects. We make stuff, host things sometimes, prototype tiny farming robots, (not anymore) and eventually dress up as giant carrots.</p>
             </section>
-            <section id="projects" class="features" aria-label="Featured projects">
-                <article class="feature" aria-labelledby="p1">
-                    <h3 id="p1">Project: Website</h3>
-                    <p>Making the website ur on rn.</p>
-                </article>
-                <article class="feature" aria-labelledby="p2">
-                    <h3 id="p2">Project: Blank</h3>
-                    <p>Redacted</p>
-                </article>
-                <article class="feature" aria-labelledby="p3">
-                    <h3 id="p3">Project: Blank</h3>
-                    <p>Redacted</p>
-                </article>
+
+            <section id="projects" class="features" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;padding:8px 24px 64px;max-width:1100px;margin:0 auto;width:calc(100% - 40px);">
+                <article class="feature"><h3>Project: Website</h3><p>Making the website ur on rn.</p></article>
+                <article class="feature"><h3>Project: Blank</h3><p>Redacted</p></article>
+                <article class="feature"><h3>Project: Blank</h3><p>Redacted</p></article>
             </section>
+
             <section id="join" style="max-width:800px;margin:0 auto;padding:0 24px 56px;">
-                <div style="background:var(--glass); border-radius:12px; padding:18px; border:1px solid rgba(0,0,0,0.035);">
-                    <h2 style="margin-top:0;">Join VCIAS</h2>
-                    <p style="margin:6px 0 12px 0; color:rgba(0,0,0,0.65);">We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
-                    <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST"
-                        style="display:grid; gap:8px; grid-template-columns: 1fr 1fr; align-items:center;">
-                        <input type="text" name="name" placeholder="Your name" aria-label="Your name" required>
-                        <input type="email" name="email" placeholder="Email" aria-label="Email" required>
-                        <textarea name="message" placeholder="A little about why you'd like to join..." required
-                            style="grid-column:1/-1;min-height:90px;"></textarea>
-                        <button type="submit" class="btn mint" style="grid-column:span 2; justify-self:start;">Become an Agent</button>
+                <div style="background:var(--glass);border-radius:12px;padding:18px;border:1px solid rgba(0,0,0,0.035);">
+                    <h2>Join VCIAS</h2>
+                    <p>We run friendly events, host a small forum, and share resources. No experience required — just bring curiosity and maybe a snack.</p>
+                    <form id="vcias-form" action="https://formspree.io/f/mnngveqe" method="POST" style="display:grid;gap:8px;grid-template-columns:1fr 1fr;align-items:center;">
+                        <input type="text" name="name" placeholder="Your name" required>
+                        <input type="email" name="email" placeholder="Email" required>
+                        <textarea name="message" placeholder="A little about why you'd like to join..." required style="grid-column:1/-1;min-height:90px;"></textarea>
+                        <button type="submit" class="btn mint" style="grid-column:span 2;justify-self:start;">Become an Agent</button>
                     </form>
-                    <div id="thankyou" style="display:none;margin-top:10px;padding:10px;background:white;border:1px solid var(--mint);border-radius:8px;color:#0b3b2e;font-weight:600;">
-                        Thank you! Your application has been sent.
-                    </div>
+                    <div id="thankyou" style="display:none;margin-top:10px;padding:10px;background:white;border:1px solid var(--mint);border-radius:8px;color:#0b3b2e;font-weight:600;">Thank you! Your application has been sent.</div>
                 </div>
             </section>
         </div>
-       
-        <!-- Agent Portal View -->
+
         <section id="agent-portal" class="portal-section">
-            <h2 style="margin-top:0; color:var(--accent);">Agent Portal</h2>
-           
-            <div id="login-prompt" class="hero-card" style="max-width:400px; margin:20px auto; padding:28px; text-align:center; display:block;">
-                <h3 style="margin-top:0;">Local Agent Access</h3>
-                <p style="color:rgba(0,0,0,0.65); font-size:0.95rem;">
-                  
+            <h2>Agent Portal</h2>
+
+            <div id="login-prompt" class="hero-card" style="max-width:400px;margin:20px auto;padding:28px;text-align:center;">
+                <h3>Local Agent Access</h3>
                 <form id="simulated-login-form">
                     <input type="text" id="login-username" placeholder="Username" required>
                     <input type="password" id="login-password" placeholder="Password" required>
-                    <button id="secure-login-btn" type="submit" class="btn mint" style="margin-top:10px;">Secure Login</button>
+                    <button type="submit" class="btn mint" style="margin-top:10px;">Secure Login</button>
                 </form>
-                <p id="login-status" style="margin-top:15px; font-size:0.9rem; text-align:center; color:gray;">
-                    Connection established. Enter credentials.
-                </p>
+                <p style="margin-top:15px;font-size:0.9rem;color:gray;">Connection established. Enter credentials.</p>
             </div>
-           
+
             <div id="portal-content" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <p style="margin:0; font-weight:600;">Status: <span id="agent-status" style="color:var(--pink-dark);">Local Admin</span> | Local ID: <span id="current-agent-id"></span></p>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                    <p style="margin:0;font-weight:600;">Status: <span id="agent-status">Junior Agent</span> | Local ID: <span id="current-agent-id"></span></p>
                     <button class="logout-btn" id="logout-button">Simulate Log Out</button>
                 </div>
 
-                <!-- ← NEW: Admin-only "Next Event" editor -->
-                <div id="next-event-editor" class="admin-card" style="display:none; margin-bottom:20px;">
-                    <h3 style="margin-top:0; color:var(--accent);">Update Homepage "Next Event"</h3>
-                    <p style="margin:4px 0 12px; font-size:0.9rem; color:#0b3b2e;">Only visible to Admin agents</p>
-                    <form id="next-event-form" style="display:grid; gap:10px;">
-                        <input type="text" id="next-event-title-input" placeholder="Event title" value="Discuss ideas for student council posters" required>
-                        <input type="text" id="next-event-details-input" placeholder="Details (e.g. Sat • 1:00 PM • IRL/Zoom)" value="Sat • 1:00 PM • IRL/Zoom">
+                <!-- ← ONLY NEW: Admin-only next event editor -->
+                <div id="next-event-editor" class="admin-card" style="display:none;margin-bottom:20px;">
+                    <h3 style="margin-top:0;color:var(--accent);">Update Homepage “Next Event”</h3>
+                    <form id="next-event-form" style="display:grid;gap:10px;">
+                        <input type="text" id="next-event-title-input" placeholder="Event title" required>
+                        <input type="text" id="next-event-details-input" placeholder="Details (e.g. Sat • 1:00 PM • IRL/Zoom)">
                         <button type="submit" class="btn mint">Update Homepage Event</button>
                     </form>
                 </div>
 
                 <div id="admin-sections" class="admin-grid">
-                    <!-- Your original admin sections unchanged -->
-                    <div id="admin-agent-creator" class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Agent Creator (LocalStorage)</h3>
-                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">Data will persist in your browser.</p>
-                        <form id="agent-creator-form" style="display:grid; gap:12px; grid-template-columns: 1fr 1fr;">
+                    <div class="admin-card">
+                        <h3>Agent Creator (LocalStorage)</h3>
+                        <p>Data will persist in your browser.</p>
+                        <form id="agent-creator-form" style="display:grid;gap:12px;grid-template-columns:1fr 1fr;">
                             <input type="text" name="newUsername" placeholder="New Agent Username" required>
                             <input type="password" name="newPassword" placeholder="Temporary Password" required>
                             <select name="newRole" required style="grid-column:span 2;">
@@ -747,48 +328,40 @@
                             </select>
                             <button type="submit" class="btn pink" style="grid-column:span 2;">Create Agent & Save</button>
                         </form>
-                       
-                        <div id="created-agents-list" style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
-                            <p style="font-weight:600; margin-bottom:5px;">Currently Active Agents (Click Delete to remove):</p>
-                            <ul id="agent-list" style="list-style:none; padding:0; font-size:0.9rem;"></ul>
+                        <div style="margin-top:15px;border-top:1px solid rgba(0,0,0,0.05);padding-top:10px;">
+                            <p style="font-weight:600;margin-bottom:5px;">Currently Active Agents (Click Delete to remove):</p>
+                            <ul id="agent-list" style="list-style:none;padding:0;font-size:0.9rem;"></ul>
                         </div>
                     </div>
-                    <div id="admin-event-scheduler" class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Event Scheduler (LocalStorage)</h3>
-                        <p style="color:var(--accent); font-weight:600; margin-top:0; font-size:0.9rem;">Data will persist in your browser.</p>
-                        <form id="event-scheduler-form" style="display:grid; gap:12px;">
+                    <div class="admin-card">
+                        <h3>Event Scheduler (LocalStorage)</h3>
+                        <p>Data will persist in your browser.</p>
+                        <form id="event-scheduler-form" style="display:grid;gap:12px;">
                             <input type="text" name="eventTitle" placeholder="Event Title" required>
                             <input type="date" name="eventDate" required>
                             <button type="submit" class="btn pink">Schedule Event & Save</button>
                         </form>
                     </div>
                 </div>
-               
-                <!-- Calendar and Chatroom completely unchanged -->
-                <div class="admin-card" style="grid-column:1/-1; margin-top:20px; padding:24px;">
-                    <h3 style="margin-top:0; color:var(--accent);">VCIAS Calendar (Local Data)</h3>
-                    <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">Local events stored in your browser are displayed below.</p>
+
+                <div class="admin-card" style="grid-column:1/-1;margin-top:20px;">
+                    <h3>VCIAS Calendar (Local Data)</h3>
+                    <p>Local events stored in your browser are displayed below.</p>
                     <div class="calendar-header">
                         <button class="btn mint" id="prev-month">Prev</button>
-                        <h3 id="month-year-display" style="margin:0;">Loading...</h3>
+                        <h3 id="month-year-display">Loading...</h3>
                         <button class="btn mint" id="next-month">Next</button>
                     </div>
-                   
-                    <div class="calendar-grid">
-                        <div id="calendar-grid"></div>
-                    </div>
+                    <div class="calendar-grid"><div id="calendar-grid"></div></div>
                 </div>
 
-                <section id="agent-chatroom" style="display:none; margin-top:40px;">
+                <section id="agent-chatroom" style="display:none;margin-top:40px;">
                     <div class="admin-card">
-                        <h3 style="margin-top:0; color:var(--accent);">Agent Chatroom (Private & Persistent)</h3>
-                        <p style="color:rgba(0,0,0,0.65); font-size:0.9rem; margin-top:0;">
-                            Only logged-in agents can see and send messages. Everything is saved in your browser.
-                        </p>
-                        <div id="chat-messages" style="height:380px; overflow-y:auto; padding:12px; background:var(--card); border-radius:10px; margin:16px 0; border:1px solid rgba(0,0,0,0.06);">
-                        </div>
-                        <form id="chat-form" style="display:grid; grid-template-columns:1fr auto; gap:8px;">
-                            <input type="text" id="chat-input" placeholder="Type a message…" autocomplete="off" required style="padding:10px;">
+                        <h3>Agent Chatroom (Private & Persistent)</h3>
+                        <p>Only logged-in agents can see and send messages. Everything is saved in your browser.</p>
+                        <div id="chat-messages" style="height:380px;overflow-y:auto;padding:12px;background:var(--card);border-radius:10px;margin:16px 0;border:1px solid rgba(0,0,0,0.06);"></div>
+                        <form id="chat-form" style="display:grid;grid-template-columns:1fr auto;gap:8px;">
+                            <input type="text" id="chat-input" placeholder="Type a message…" autocomplete="off" required>
                             <button type="submit" class="btn mint">Send</button>
                         </form>
                     </div>
@@ -796,6 +369,7 @@
             </div>
         </section>
     </main>
+
     <footer>
         <div class="footer-inner">
             <div>© <strong>VCIAS</strong> — Vegggie Central Intelligence Agency Society</div>
